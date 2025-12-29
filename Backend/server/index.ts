@@ -107,13 +107,19 @@ const Contact = mongoose.model('Contact', contactSchema);
 // Connect to MongoDB
 async function connectDB() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/flourshop');
-    console.log('✅ MongoDB connected successfully');
+    // MongoDB Atlas connection options
+    const options = {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+    
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/flourshop', options);
+     console.log('✅ MongoDB Atlas connected successfully');
     
     // Seed initial data if needed
     await seedDatabase();
-  } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+   } catch (error) {
+    console.error('❌ MongoDB Atlas connection failed:', error);
     process.exit(1);
   }
 }

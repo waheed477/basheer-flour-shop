@@ -5,14 +5,30 @@ dotenv.config();
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/flourshop';
 
-// Connect to MongoDB
+// Connect to MongoDB with Atlas configuration
 export async function connectDB() {
   try {
-    await mongoose.connect(MONGODB_URI);
-    console.log('✅ MongoDB connected successfully');
+    // MongoDB Atlas connection options
+    const options = {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    };
+    
+    await mongoose.connect(MONGODB_URI, options);
+    console.log('✅ MongoDB Atlas connected successfully');
+    
+    // Connection events
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.log('❌ MongoDB disconnected');
+    });
+    
     return mongoose.connection;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    console.error('❌ MongoDB Atlas connection failed:', error);
     process.exit(1);
   }
 }
@@ -22,14 +38,14 @@ export async function testConnection() {
   try {
     const conn = mongoose.connection;
     if (conn.readyState === 1) {
-      console.log('✅ MongoDB is connected');
+      console.log('✅ MongoDB Atlas is connected');
       return true;
     }
     
     await connectDB();
     return true;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    console.error('❌ MongoDB Atlas connection failed:', error);
     return false;
   }
 }
@@ -38,8 +54,8 @@ export async function testConnection() {
 export async function closeDB() {
   try {
     await mongoose.connection.close();
-    console.log('✅ MongoDB connection closed');
+    console.log('✅ MongoDB Atlas connection closed');
   } catch (error) {
-    console.error('❌ Error closing MongoDB connection:', error);
+    console.error('❌ Error closing MongoDB Atlas connection:', error);
   }
 }
