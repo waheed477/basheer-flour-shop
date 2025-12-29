@@ -1,0 +1,65 @@
+Updated Product Requirements for Bashir Flour Shop
+
+Add the following requirements to the product display system:
+
+Measurement Unit Display:
+
+All wheat products must display their measurement unit as "1 Maan = 40 Kg" prominently on product cards
+
+Wheat product prices should be calculated and displayed per "Maan" unit
+
+Flour products should continue to use standard kilogram/pound units as appropriate
+
+Bilingual Product Details:
+
+Each product must have complete bilingual descriptions in both English and Urdu
+
+Product names should be displayed in both languages with proper RTL/LTR formatting
+
+Product descriptions should include detailed specifications in both English and Urdu
+
+Measurement units should be translated appropriately for each language context
+
+Product Card Modifications:
+
+Update ProductCard component to show bilingual product information
+
+Add a clear measurement unit indicator for wheat products
+
+Display pricing information with the appropriate unit (Maan for wheat, Kg for flour)
+
+Implement conditional rendering to show wheat-specific measurement info only for wheat products
+
+Product Data Structure:
+
+Add bilingual description fields to product objects: descriptionEn and descriptionUr
+
+Include measurement unit specification in product data
+
+Add price per unit display logic
+
+Admin Product Form:
+
+Update ProductForm to include separate input fields for English and Urdu descriptions
+
+Add measurement unit selection (Maan/Kg) based on product category
+
+Include validation for bilingual content
+
+Price Calculation:
+
+For wheat products: Display price per Maan (1 Maan = 40 Kg)
+
+For flour products: Display price per standard unit (Kg or Lb)
+
+Clearly indicate the measurement unit next to all prices
+
+UI/UX Considerations:
+
+Ensure bilingual text switches properly when language changes
+
+Maintain consistent formatting for measurement units
+
+Provide clear visual distinction between wheat and flour products
+
+Support RTL text rendering for Urdu product descriptions

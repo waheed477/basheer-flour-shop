@@ -1,0 +1,418 @@
+ TECHNICAL REQUIREMENTS
+1. React Setup:
+✅ Use Create React App or Vite
+
+✅ React Router DOM v6 for routing
+
+✅ Functional components with React Hooks
+
+✅ Proper state management
+
+2. Styling & UI:
+✅ Bootstrap 5 (React Bootstrap components)
+
+✅ Custom CSS for unique styling
+
+✅ Responsive design (mobile, tablet, desktop)
+
+✅ RTL support for Urdu language
+
+3. External Libraries:
+✅ Axios for API calls (setup ready for backend integration)
+
+✅ React Icons for icons
+
+✅ React Toastify for notifications
+
+✅ React Bootstrap for UI components
+
+4. Package.json Dependencies:
+json
+"dependencies": {
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0",
+  "react-router-dom": "^6.8.0",
+  "axios": "^1.3.0",
+  "bootstrap": "^5.2.3",
+  "react-bootstrap": "^2.7.0",
+  "react-icons": "^4.7.1",
+  "react-toastify": "^9.1.1"
+}
+📱 PAGES TO IMPLEMENT
+PUBLIC PAGES (Customer-Facing):
+1. Home Page (/)
+✅ Hero section with shop introduction
+
+✅ Featured products showcase with wheat and flour tabs
+
+✅ "About Us" section
+
+✅ Call-to-action buttons
+
+✅ Bilingual welcome message
+
+2. Products Page (/products)
+✅ Tab interface for Wheat and Flour products
+
+✅ Two main tabs: "Wheat" and "Flour" (with Urdu translations)
+
+✅ Grid layout of products within each tab
+
+✅ Product cards with image, name, price
+
+✅ Category filtering within each tab
+
+✅ Search functionality within each tab
+
+✅ Product details view
+
+✅ Bilingual product names
+
+3. Contact Page (/contact)
+✅ Contact form with validation
+
+✅ Shop information display
+
+✅ WhatsApp integration button
+
+✅ Google Maps placeholder
+
+✅ Operating hours
+
+ADMIN PAGES (Protected):
+4. Admin Login (/admin/login)
+✅ Login form with email/password
+
+✅ Pre-filled default credentials:
+
+Email: basheer000@gmail.com
+
+Password: basheer111
+
+✅ Error message display
+
+✅ Remember me functionality
+
+5. Admin Dashboard (/admin/dashboard)
+✅ Dashboard overview
+
+✅ Statistics cards (total products, contacts, etc.)
+
+✅ Quick action buttons
+
+✅ Recent activity feed
+
+✅ Shop info preview
+
+6. Product Management (/admin/products)
+✅ List all products in table with category filter (wheat/flour)
+
+✅ Add new product form with category selection (wheat/flour)
+
+✅ Edit existing product
+
+✅ Delete product with confirmation
+
+✅ Image upload placeholder
+
+✅ Stock management
+
+7. Contact Management (/admin/contacts)
+✅ List customer inquiries
+
+✅ View message details
+
+✅ Update inquiry status
+
+✅ Search and filter inquiries
+
+✅ Export functionality placeholder
+
+🔄 CORE FEATURES TO IMPLEMENT
+1. Bilingual Support (English/Urdu)
+✅ Language toggle button in navbar
+
+✅ Context API for language management
+
+✅ RTL layout switching for Urdu
+
+✅ Translation dictionaries for all text
+
+✅ Language persistence (localStorage)
+
+2. Responsive Design
+✅ Mobile-first approach
+
+✅ Hamburger menu for mobile
+
+✅ Responsive grids and layouts
+
+✅ Touch-friendly interfaces
+
+✅ Cross-browser compatibility
+
+3. Form Handling
+✅ Form validation (client-side)
+
+✅ Error message display
+
+✅ Loading states during submission
+
+✅ Success/error notifications
+
+✅ Form reset after submission
+
+4. State Management
+✅ AuthContext for user authentication
+
+✅ LanguageContext for bilingual support
+
+✅ LocalStorage for token persistence
+
+✅ Protected route implementation
+
+✅ Loading state management
+
+5. API Service Layer
+✅ Axios instance setup
+
+✅ API service functions (ready for backend integration)
+
+✅ Request/response interceptors
+
+✅ Error handling for API calls
+
+✅ Mock data for development
+
+🔧 API INTEGRATION PREPARATION
+API Service Structure:
+Create services/api.js with ready-to-use functions:
+
+javascript
+// Product APIs
+export const getProducts = () => {};
+export const getWheatProducts = () => {};
+export const getFlourProducts = () => {};
+export const createProduct = (product) => {};
+export const updateProduct = (id, product) => {};
+export const deleteProduct = (id) => {};
+
+// Admin APIs
+export const adminLogin = (credentials) => {};
+export const getAdminProfile = () => {};
+
+// Contact APIs
+export const submitContact = (data) => {};
+export const getContacts = () => {};
+Mock Data:
+Create sample product data in utils/mockData.js for development:
+
+javascript
+export const mockProducts = [
+  {
+    id: 1,
+    name: "Premium Wheat Flour",
+    nameUrdu: "پریمیم گندم کا آٹا",
+    price: 1200,
+    category: "flour",
+    image: "flour1.jpg",
+    stock: 50
+  },
+  {
+    id: 2,
+    name: "Premium Wheat Grains",
+    nameUrdu: "پریمیم گندم کے دانے",
+    price: 800,
+    category: "wheat",
+    image: "wheat1.jpg",
+    stock: 100
+  },
+  // Add more mock products with wheat and flour categories
+];
+🎯 SPECIFIC COMPONENT REQUIREMENTS
+1. Navbar Component:
+✅ Shop logo and name
+
+✅ Navigation links (Home, Products, Contact, Admin)
+
+✅ Language toggle button (EN/UR)
+
+✅ Responsive hamburger menu
+
+✅ Active link highlighting
+
+2. Footer Component:
+✅ Shop contact information
+
+✅ Social media icons placeholder
+
+✅ Quick links
+
+✅ Copyright information
+
+✅ Bilingual content
+
+3. ProductCard Component:
+✅ Product image
+
+✅ Product name (bilingual)
+
+✅ Price display
+
+✅ "View Details" button
+
+✅ Stock status indicator
+
+✅ Category badge (Wheat/Flour)
+
+4. ProductTabs Component:
+✅ Tab interface for switching between Wheat and Flour products
+
+✅ Active tab highlighting
+
+✅ Responsive tab design for mobile
+
+✅ Bilingual tab labels
+
+✅ Smooth tab transition
+
+5. AdminSidebar Component:
+✅ Admin menu navigation
+
+✅ Collapsible on mobile
+
+✅ Active menu highlighting
+
+✅ Admin profile info
+
+✅ Logout button
+
+6. ProductForm Component:
+✅ Form for adding/editing products
+
+✅ Bilingual input fields
+
+✅ Category selection (Wheat/Flour)
+
+✅ Image upload placeholder
+
+✅ Validation messages
+
+✅ FUNCTIONAL REQUIREMENTS
+Authentication Flow:
+User visits /admin/login
+
+Enters credentials (default pre-filled)
+
+Redirects to /admin/dashboard on success
+
+Token stored in localStorage
+
+Protected routes check for valid token
+
+Logout clears token and redirects to home
+
+Language Switching:
+Click language toggle in navbar
+
+Switch between English/Urdu
+
+Update all text content
+
+Switch CSS direction (LTR/RTL)
+
+Save preference in localStorage
+
+Tab Functionality:
+✅ Wheat and Flour tabs on Products page
+
+✅ Wheat and Flour tabs on Home page featured section
+
+✅ Active tab state management
+
+✅ Separate product filtering for each category
+
+✅ URL query parameters support for tabs
+
+Form Validations:
+✅ Required field validation
+
+✅ Email format validation
+
+✅ Phone number validation
+
+✅ Password strength (for admin)
+
+✅ Real-time validation feedback
+
+Error Handling:
+✅ Network error handling
+
+✅ Form validation errors
+
+✅ API error responses
+
+✅ User-friendly error messages
+
+✅ Graceful degradation
+
+📱 RESPONSIVE BREAKPOINTS
+Mobile (≤ 768px):
+✅ Stacked layouts
+
+✅ Hamburger navigation
+
+✅ Touch-friendly buttons
+
+✅ Simplified forms
+
+✅ Tab interface as dropdown on small screens
+
+Tablet (769px - 1024px):
+✅ 2-column grids for products
+
+✅ Adjusted spacing
+
+✅ Optimized images
+
+Desktop (≥ 1025px):
+✅ Full navigation bar
+
+✅ 3-4 column product grids
+
+✅ Sidebar layouts for admin
+
+✅ Optimal whitespace
+
+🎨 DESIGN ASSETS & CONTENT
+Text Content:
+Shop Name: "Bashir Flour Shop" / "بشیر آٹا شاپ"
+
+Tagline: "Premium Quality Flour & Wheat Products"
+
+About text: Provide details about shop history and quality
+
+Contact information (use placeholders)
+
+Tab Labels:
+English: "Wheat" / "Flour"
+
+Urdu: "گندم" / "آٹا"
+
+Images:
+Use placeholder images from Unsplash or similar
+
+Product categories: flour, wheat (with separate visual identities)
+
+Ensure images are responsive and optimized
+
+Provide fallback images
+
+Icons:
+Use React Icons library
+
+Consistent icon style throughout
+
+Appropriate icons for actions
+
+Different icons for wheat and flour categories
