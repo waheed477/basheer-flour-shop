@@ -1,5 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/use-products";
+import { 
+  useProducts, 
+  useCreateProduct, 
+  useUpdateProduct, 
+  useDeleteProduct 
+} from "@/hooks/use-products"; // Keep this one
 import { useContacts, useUpdateContactStatus } from "@/hooks/use-contacts";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,6 +22,7 @@ import { type Product } from "@/shared/schema";
 
 // Admin Layout Component with Back to Home
 function AdminLayout({ children }: { children: React.ReactNode }) {
+  // ... rest of your code ...
   const { t, dir } = useLanguage();
   
   return (

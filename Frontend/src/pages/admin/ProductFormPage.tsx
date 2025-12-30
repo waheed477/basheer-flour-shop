@@ -15,7 +15,8 @@ export default function ProductFormPage() {
   const productId = params?.id;
   const isEditMode = !!productId;
   
-  const { data: productData } = useProduct(productId ? parseInt(productId) : 0);
+  // Remove parseInt - useProduct now accepts string or number
+  const { data: productData } = useProduct(productId);
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
 
@@ -28,8 +29,9 @@ export default function ProductFormPage() {
       };
 
       if (isEditMode && productId) {
+        // Remove parseInt - updateMutation expects string id
         await updateMutation.mutateAsync({
-          id: parseInt(productId),
+          id: productId,
           ...productData,
         });
       } else {

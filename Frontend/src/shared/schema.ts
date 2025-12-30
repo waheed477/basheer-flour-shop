@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // ===== PRODUCT SCHEMAS =====
 export const productSchema = z.object({
-  id: z.number().optional(),
+  id: z.string().optional(),  // CHANGED: number -> string
   name: z.string(),
   nameUrdu: z.string(),
   descriptionEn: z.string(),
@@ -54,7 +54,7 @@ export type ProductFormValues = z.infer<typeof productFormSchema>;
 
 // ===== CONTACT SCHEMAS =====
 export const contactSchema = z.object({
-  id: z.number().optional(),
+  id: z.string().optional(),  // CHANGED: number -> string
   name: z.string(),
   email: z.string(),
   phone: z.string().optional(),
@@ -121,7 +121,7 @@ export type SettingsFormValues = z.infer<typeof settingsFormSchema>;
 
 // ===== USER/AUTH SCHEMAS =====
 export const userSchema = z.object({
-  id: z.number().optional(),
+  id: z.string().optional(),  // CHANGED: number -> string
   username: z.string(),
   role: z.string(),
 });

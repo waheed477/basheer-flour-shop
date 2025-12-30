@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { insertContactSchema } from "@shared/schema";
+import { insertContactSchema } from "@/shared/schema"; // FIXED: Changed to frontend path
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Phone, MapPin, Loader2, Clock } from "lucide-react";
 import { useState, useEffect } from "react";

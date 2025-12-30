@@ -1,218 +1,149 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
-import type { Product, InsertProduct, UpdateProductRequest } from '@/shared/schema';
+import type { Product } from '@/shared/schema';
 import { useToast } from './use-toast';
 
 export function useProducts() {
   const { toast } = useToast();
-  
-  return useQuery({
+
+  return useQuery<Product[]>({
     queryKey: ['products'],
     queryFn: async () => {
-      console.log('📡 Fetching products from backend...');
       try {
-        const products = await api.products.list();
+        const response = await api.products.list();
         
-        // DEBUG: Log raw data from API
-        console.log('📦 Raw products from API:', products);
+        // Ensure we always return an array
+        if (!Array.isArray(response)) {
+          console.error('Products response is not array:', response);
+          return [];
+        }
         
-        // Transform data to match frontend
-        const transformedProducts = products.map(product => {
-          const productId = product._id || product.id;
-          
-          // Image URL handle karein
-          let imageUrl = '';
-          if (product.imageUrl) {
-            // Backend ne full URL diya hai
-            imageUrl = product.imageUrl;
-          } else if (product.image) {
-            // Agar sirf path hai to full URL banayein
-            if (product.image.startsWith('http')) {
-              imageUrl = product.image;
-            } else if (product.image.startsWith('/uploads')) {
-              // Local uploads folder se hai
-              // FIXED: Use environment variable
-              const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-              imageUrl = `${API_URL}${product.image}`;
-            } else {
-              imageUrl = product.image;
-            }
-          }
-          
-          const transformed = {
-            id: productId,
-            name: product.name || '',
-            nameUrdu: product.nameUrdu || '',
-            descriptionEn: product.descriptionEn || '',
-            descriptionUrdu: product.descriptionUrdu || '',
-            price: product.price || '0',
-            category: product.category || 'flour',
-            unit: product.unit || 'kg',
-            image: imageUrl,  // <-- Full URL dijiye
-            stock: product.stock || 0,
-            createdAt: product.createdAt,
-            updatedAt: product.updatedAt
-          };
-          
-          console.log(`✅ Transformed product image:`, {
-            originalImage: product.image,
-            imageUrl: product.imageUrl,
-            finalImage: transformed.image
-          });
-          
-          return transformed;
-        });
+        // Transform the data to match your frontend schema
+        const transformedProducts = response.map(product => ({
+          id: product._id || product.id,
+          name: product.name,
+          nameUrdu: product.nameUrdu,
+          descriptionEn: product.descriptionEn,
+          descriptionUrdu: product.descriptionUrdu,
+          price: product.price,
+          category: product.category,
+          unit: product.unit,
+          image: product.image,
+          stock: product.stock,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt
+        }));
         
-        console.log(`✅ Total ${transformedProducts.length} products transformed`);
         return transformedProducts;
       } catch (error: any) {
-        console.error('❌ Failed to load products:', error);
-        throw error;
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to load products",
+          variant: "destructive",
+        });
+        return []; // Return empty array to prevent crashes
       }
     },
     staleTime: 1000 * 60 * 5,
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to load products",
-        variant: "destructive",
-      });
-    },
+    retry: 2,
   });
 }
 
-// Update the single product function similarly
-export function useProduct(id: number) {
+// Also update useProduct hook:
+export function useProduct(id?: string | number) {
   const { toast } = useToast();
-  
-  return useQuery({
-    queryKey: ['products', id],
+
+  return useQuery<Product>({
+    queryKey: ['product', id],
     queryFn: async () => {
-      console.log('📡 Fetching product ID:', id);
       try {
-        const product = await api.products.get(id);
-        
-        // Image URL handle karein (same logic as above)
-        let imageUrl = '';
-        if (product.imageUrl) {
-          // Backend ne full URL diya hai
-          imageUrl = product.imageUrl;
-        } else if (product.image) {
-          // Agar sirf path hai to full URL banayein
-          if (product.image.startsWith('http')) {
-            imageUrl = product.image;
-          } else if (product.image.startsWith('/uploads')) {
-            // Local uploads folder se hai
-            // FIXED: Use environment variable
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            imageUrl = `${API_URL}${product.image}`;
-          } else {
-            imageUrl = product.image;
-          }
+        if (!id) {
+          throw new Error('Product ID is required');
         }
+        const response = await api.products.getById(String(id));
         
-        // Transform data to match frontend
-        const transformedProduct = {
-          id: product._id || product.id,
-          name: product.name || '',
-          nameUrdu: product.nameUrdu || '',
-          descriptionEn: product.descriptionEn || '',
-          descriptionUrdu: product.descriptionUrdu || '',
-          price: product.price || '0',
-          category: product.category || 'flour',
-          unit: product.unit || 'kg',
-          image: imageUrl,  // <-- Full URL dijiye
-          stock: product.stock || 0,
-          createdAt: product.createdAt,
-          updatedAt: product.updatedAt
+        // Transform the data
+        return {
+          id: response._id || response.id,
+          name: response.name,
+          nameUrdu: response.nameUrdu,
+          descriptionEn: response.descriptionEn,
+          descriptionUrdu: response.descriptionUrdu,
+          price: response.price,
+          category: response.category,
+          unit: response.unit,
+          image: response.image,
+          stock: response.stock,
+          createdAt: response.createdAt,
+          updatedAt: response.updatedAt
         };
-        
-        console.log('✅ Product loaded:', transformedProduct.name);
-        console.log('✅ Product image URL:', imageUrl);
-        return transformedProduct;
       } catch (error: any) {
-        console.error('❌ Failed to load product:', error);
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to load product",
+          variant: "destructive",
+        });
         throw error;
       }
     },
     enabled: !!id,
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to load product",
-        variant: "destructive",
-      });
-    },
+    staleTime: 1000 * 60 * 5,
+    retry: 2,
   });
 }
 
-// The mutation functions are fine - they just need to send correct data
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   return useMutation({
-    mutationFn: async (data: InsertProduct) => {
-      console.log('📡 Creating product:', data.name);
-      console.log('📤 Sending product data:', data);
+    mutationFn: async (data: Partial<Product>) => {
       try {
-        const product = await api.products.create(data);
-        console.log('✅ Product created:', product);
-        return product;
+        const created = await api.products.create(data);
+        return created;
       } catch (error: any) {
-        console.error('❌ Failed to create product:', error);
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to create product",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    onSuccess: () => {
-      // Invalidate and refetch products
+    onSuccess: (newProduct) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast({
         title: "Success",
         description: "Product created successfully",
       });
     },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to create product",
-        variant: "destructive",
-      });
-    },
   });
 }
 
-// Update and Delete functions remain the same
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   return useMutation({
-    mutationFn: async ({ id, ...data }: { id: number } & UpdateProductRequest) => {
-      console.log('📡 Updating product ID:', id);
-      console.log('📤 Update data:', data);
+    mutationFn: async ({ id, ...data }: Partial<Product> & { id: string }) => {
       try {
-        const product = await api.products.update(id, data);
-        console.log('✅ Product updated:', product);
-        return product;
+        const updated = await api.products.update(id, data);
+        return updated;
       } catch (error: any) {
-        console.error('❌ Failed to update product:', error);
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to update product",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedProduct) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['products', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['product', id] }); // Also invalidate single product cache
       toast({
         title: "Success",
         description: "Product updated successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to update product",
-        variant: "destructive",
       });
     },
   });
@@ -221,30 +152,27 @@ export function useUpdateProduct() {
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   return useMutation({
-    mutationFn: async (id: number) => {
-      console.log('📡 Deleting product ID:', id);
+    mutationFn: async (id: string) => {
       try {
         await api.products.delete(id);
-        console.log('✅ Product deleted');
+        return id;
       } catch (error: any) {
-        console.error('❌ Failed to delete product:', error);
+        toast({
+          title: "Error",
+          description: error?.message || "Failed to delete product",
+          variant: "destructive",
+        });
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product', deletedId] }); // Also invalidate single product cache
       toast({
         title: "Success",
         description: "Product deleted successfully",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error?.error || "Failed to delete product",
-        variant: "destructive",
       });
     },
   });

@@ -10,7 +10,7 @@ import { useProducts } from "@/hooks/use-products";
 import { ProductCard } from "@/components/ui/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/hooks/use-settings";
-import ImageSlider from "@/components/ui/image-slider"; // ✅ NEW IMPORT
+import ImageSlider from "@/components/ui/image-slider";
 
 export default function HomePage() {
   const { t, dir } = useLanguage();
@@ -21,11 +21,11 @@ export default function HomePage() {
   
   // Shop images - Update these with your actual image filenames from uploads folder
   const shopImages = [
-    "one (1).jpeg",  // Replace with your image names
+    "one (1).jpeg",
     "one (3).jpeg",
     "one (2).jpeg", 
     "one (4).jpeg"
-  ];
+  ].filter(img => img && img.trim() !== '');
 
   const whatsappNumber = settings?.whatsappNumber || "923001234567";
   const phoneNumber = settings?.phoneNumber || "+923001234567";
@@ -169,197 +169,235 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ✅ NEW: Shop Images Slider Section - Replaces Features Section */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-background">
+      {/* Shop Gallery Section */}
+      <section className="py-16 sm:py-20 md:py-24 lg:py-28 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            className="space-y-8"
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="space-y-12"
           >
-            {/* Title Section - Premium Quality */}
-            <div className="text-center max-w-3xl mx-auto space-y-4" dir={dir}>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-                <Star className="h-4 w-4" />
-                <span>{dir === 'ltr' ? 'Our Shop Gallery' : 'ہماری دکان کی گیلری'}</span>
+            {/* Section Header */}
+            <div className="text-center max-w-4xl mx-auto space-y-4" dir={dir}>
+              <div className="inline-flex items-center gap-3 bg-primary/10 border border-primary/20 px-6 py-3 rounded-full">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-primary font-semibold text-sm">
+                  {dir === 'ltr' ? 'SHOP GALLERY' : 'دکان گیلری'}
+                </span>
               </div>
               
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display text-foreground">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-display">
                 {dir === 'ltr' ? (
                   <>
-                    <span className="text-primary">Premium Quality</span> Flour
+                    Inside Our <span className="text-primary">Flour Shop</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-primary">اعلیٰ معیار</span> کا آٹا
+                    ہماری <span className="text-primary">آٹے کی دکان</span> کے اندر
                   </>
                 )}
               </h2>
               
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
                 {dir === 'ltr' ? (
-                  "Hand-picked grains processed with care to ensure the finest quality for your family."
+                  "Experience our setup through pictures"
                 ) : (
                   <span className="font-urdu" dir="rtl">
-                    ہاتھ سے چنے ہوئے اناج جو آپ کے خاندان کے لیے بہترین معیار کو یقینی بنانے کے لیے احتیاط سے پروسیس کیا جاتا ہے۔
+                    ہمارے سیٹ اپ کو تصاویر کے ذریعے دیکھیں
                   </span>
                 )}
               </p>
             </div>
 
-            {/* Image Slider */}
-            <div className="px-4 sm:px-0">
-              <ImageSlider 
-                images={shopImages}
-                autoSlideInterval={3000}
-                showDots={true}
-                showArrows={true}
-                className="max-w-6xl mx-auto"
-              />
-              
-              {/* Caption */}
-              <p className="text-center text-sm text-muted-foreground mt-6 px-4">
-                {dir === 'ltr' 
-                  ? "Scroll through our shop images to see our setup and quality products"
-                  : "ہماری دکان کی تصاویر دیکھنے کے لیے سکرول کریں"
-                }
-              </p>
+            {/* Main Image Slider */}
+            <div className="relative">
+              <div className="max-w-7xl mx-auto">
+                <ImageSlider 
+                  images={shopImages}
+                  autoSlideInterval={3000}
+                  showDots={true}
+                  showArrows={true}
+                  className="rounded-2xl sm:rounded-3xl border border-gray-200 shadow-xl"
+                />
+              </div>
             </div>
 
-            {/* Quality Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-8">
+            {/* Shop Features */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[
                 { 
-                  labelEn: "Fresh Grains", 
-                  labelUr: "تازہ اناج", 
-                  descEn: "Daily sourced", 
-                  descUr: "روزانہ حاصل کردہ" 
+                  icon: "🏭",
+                  titleEn: "Production Area", 
+                  titleUr: "پروڈکشن ایریا",
+                  descEn: "Modern machinery for processing",
+                  descUr: "پروسیسنگ کے لیے جدید مشینری"
                 },
                 { 
-                  labelEn: "Clean Process", 
-                  labelUr: "صاف پروسیس", 
-                  descEn: "Hygienic setup", 
-                  descUr: "صاف ستھرا سیٹ اپ" 
+                  icon: "📦",
+                  titleEn: "Storage Facility", 
+                  titleUr: "اسٹوریج سہولت",
+                  descEn: "Clean and organized storage",
+                  descUr: "صاف اور منظم اسٹوریج"
                 },
                 { 
-                  labelEn: "Quality Check", 
-                  labelUr: "معیار چیک", 
-                  descEn: "Tested in lab", 
-                  descUr: "لیب میں ٹیسٹ شدہ" 
-                },
-                { 
-                  labelEn: "Family Business", 
-                  labelUr: "خاندانی کاروبار", 
-                  descEn: "Since 1985", 
-                  descUr: "1985 سے" 
+                  icon: "🛒",
+                  titleEn: "Customer Area", 
+                  titleUr: "گاہک ایریا",
+                  descEn: "Comfortable waiting space",
+                  descUr: "آرام دہ انتظار کی جگہ"
                 }
-              ].map((item, index) => (
-                <div 
-                  key={index}
-                  className="bg-card p-4 rounded-xl border border-border/50 text-center hover:shadow-md transition-shadow"
+              ].map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.2 }}
+                  className="bg-gray-50 p-6 rounded-2xl border border-gray-100"
                 >
-                  {dir === 'ltr' ? (
-                    <>
-                      <h4 className="font-bold text-foreground mb-1">{item.labelEn}</h4>
-                      <p className="text-sm text-muted-foreground">{item.descEn}</p>
-                    </>
-                  ) : (
-                    <>
-                      <h4 className="font-bold text-foreground mb-1 font-urdu" dir="rtl">{item.labelUr}</h4>
-                      <p className="text-sm text-muted-foreground font-urdu" dir="rtl">{item.descUr}</p>
-                    </>
-                  )}
-                </div>
+                  <div className="text-4xl mb-4">{item.icon}</div>
+                  <h3 className="text-xl font-bold text-foreground mb-2">
+                    {dir === 'ltr' ? item.titleEn : item.titleUr}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {dir === 'ltr' ? item.descEn : item.descUr}
+                  </p>
+                </motion.div>
               ))}
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-12 sm:py-16 md:py-20 bg-secondary/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12" dir={dir}>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-display mb-3 sm:mb-4">{t("products.title")}</h2>
-            <div className="h-1 w-16 sm:w-20 bg-primary mx-auto rounded-full" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" dir={dir}>
-            {isLoading ? (
-              [1, 2, 3].map((n) => (
-                <div key={n} className="flex flex-col space-y-3">
-                  <Skeleton className="h-48 sm:h-56 md:h-64 w-full rounded-xl" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
-              ))
-            ) : (
-              featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
-          
-          <div className="text-center mt-8 sm:mt-12">
-            <Link href="/products">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="border-primary text-primary hover:bg-primary/5 touch-target px-6 sm:px-8"
-              >
-                {dir === 'ltr' ? 'View All Products' : 'تمام مصنوعات دیکھیں'}
-              </Button>
-            </Link>
-          </div>
+     {/* Featured Products Section */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8" dir={dir}>
+  {isLoading ? (
+    [1, 2, 3].map((n) => (
+      <div key={n} className="flex flex-col space-y-4">
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <div className="space-y-3">
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-10 w-full rounded-lg" />
         </div>
-      </section>
+      </div>
+    ))
+  ) : featuredProducts.length > 0 ? (
+    featuredProducts.map((product) => (
+      <div key={product.id} className="h-full">
+        <ProductCard product={product} />
+      </div>
+    ))
+  ) : (
+    <div className="col-span-3 text-center py-12">
+      <p className="text-lg text-muted-foreground">
+        {dir === 'ltr' 
+          ? "No products available yet. Check back soon!"
+          : "ابھی تک کوئی مصنوعات دستیاب نہیں ہیں۔ جلد ہی دوبارہ چیک کریں!"
+        }
+      </p>
+    </div>
+  )}
+</div>
 
       {/* About Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-card rounded-none sm:rounded-2xl m-0 sm:mx-4 md:mx-6 lg:mx-8">
+      <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-            <div className="text-center md:text-left">
-              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
-                {dir === 'ltr' ? 'About Our Shop' : 'ہماری دکان کے بارے میں'}
-              </h2>
-              <p className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8">
-                {dir === 'ltr' 
-                  ? "Family-owned since 1985, we provide the finest quality wheat and flour sourced directly from our farms. Our traditional methods ensure purity and freshness in every batch."
-                  : "خاندانی ملکیت میں 1985 سے، ہم براہ راست اپنے فارمز سے حاصل کردہ اعلیٰ معیار کی گندم اور آٹا فراہم کرتے ہیں۔ ہمارے روایتی طریقوں سے ہر بیچ میں خالصیت اور تازگی یقینی ہوتی ہے۔"
-                }
-              </p>
-            </div>
-            <div className="bg-secondary/50 p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl">
-              <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                <div className="text-center p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">38+</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
+          <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="space-y-6"
+            >
+              <div>
+                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
+                  <Wheat className="h-4 w-4" />
+                  <span>{dir === 'ltr' ? 'Since 1985' : '1985 سے'}</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-foreground">
+                  {dir === 'ltr' ? 'Family-Owned Flour Shop' : 'خاندانی آٹے کی دکان'}
+                </h2>
+                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+                  {dir === 'ltr' 
+                    ? "For over 38 years, our family has been providing the finest quality wheat and flour sourced directly from our farms. Our traditional methods ensure purity and freshness in every batch, maintaining the trust of generations of customers."
+                    : "38 سالوں سے، ہمارا خاندان براہ راست اپنے فارمز سے حاصل کردہ اعلیٰ معیار کی گندم اور آٹا فراہم کر رہا ہے۔ ہمارے روایتی طریقوں سے ہر بیچ میں خالصیت اور تازگی یقینی ہوتی ہے، جو نسلوں کے گاہکوں کا اعتماد برقرار رکھتی ہے۔"
+                  }
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">38+</div>
+                  <div className="text-sm text-muted-foreground">
                     {dir === 'ltr' ? 'Years Experience' : 'سالوں کا تجربہ'}
                   </div>
                 </div>
-                <div className="text-center p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">5000+</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    {dir === 'ltr' ? 'Happy Customers' : 'خوشگاہک'}
-                  </div>
-                </div>
-                <div className="text-center p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">100%</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    {dir === 'ltr' ? 'Pure Quality' : 'خالص معیار'}
-                  </div>
-                </div>
-                <div className="text-center p-3 sm:p-4">
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">24/7</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">
-                    {dir === 'ltr' ? 'Delivery' : 'ڈیلیوری'}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">5000+</div>
+                  <div className="text-sm text-muted-foreground">
+                    {dir === 'ltr' ? 'Happy Families' : 'خوشگوار خاندان'}
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="bg-gray-50 p-6 sm:p-8 rounded-2xl"
+            >
+              <h3 className="text-xl font-bold mb-6 text-center">
+                {dir === 'ltr' ? 'Why Choose Us?' : 'ہمیں کیوں منتخب کریں؟'}
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { 
+                    titleEn: "Direct from Farms", 
+                    titleUr: "براہ راست فارمز سے",
+                    descEn: "No middlemen, fresh stock daily",
+                    descUr: "بغیر درمیانی افراد کے، روزانہ تازہ اسٹاک"
+                  },
+                  { 
+                    titleEn: "Traditional Methods", 
+                    titleUr: "روایتی طریقے",
+                    descEn: "Time-tested processing techniques",
+                    descUr: "وقت سے آزمودہ پروسیسنگ تکنیک"
+                  },
+                  { 
+                    titleEn: "Fair Pricing", 
+                    titleUr: "منصفانہ قیمتیں",
+                    descEn: "Competitive prices without compromise on quality",
+                    descUr: "معیار پر سمجھوتہ کیے بغیر مسابقتی قیمتیں"
+                  },
+                  { 
+                    titleEn: "Home Delivery", 
+                    titleUr: "گھر ڈیلیوری",
+                    descEn: "Free delivery in local area",
+                    descUr: "مقامی علاقے میں مفت ڈیلیوری"
+                  }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-white rounded-lg">
+                    <div className="bg-primary/10 p-2 rounded-lg">
+                      <div className="text-primary font-bold">{index + 1}</div>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-foreground">
+                        {dir === 'ltr' ? item.titleEn : item.titleUr}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        {dir === 'ltr' ? item.descEn : item.descUr}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
