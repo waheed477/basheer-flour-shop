@@ -21,11 +21,11 @@ export default function HomePage() {
   
   // Shop images - Update these with your actual image filenames from uploads folder
   const shopImages = [
-    "one (1).jpeg",
-    "one (3).jpeg",
-    "one (2).jpeg", 
-    "one (4).jpeg"
-  ].filter(img => img && img.trim() !== '');
+      "/shop-images/shop1.jpg",
+      "/shop-images/shop3.jpg",
+      "/shop-images/shop2.jpg",
+      "/shop-images/shop4.jpg"
+    ].filter(img => img && img.trim() !== '');
 
   const whatsappNumber = settings?.whatsappNumber || "923001234567";
   const phoneNumber = settings?.phoneNumber || "+923001234567";
@@ -406,3 +406,5 @@ export default function HomePage() {
     </div>
   );
 }
+
+
