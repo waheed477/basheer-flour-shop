@@ -7,14 +7,33 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@shared": path.resolve(__dirname, "../Backend/shared"), // Updated to Backend/shared
-      "@assets": path.resolve(__dirname, "attached_assets"),
     },
   },
   root: ".",
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    sourcemap: false,
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          ui: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toast",
+          ],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

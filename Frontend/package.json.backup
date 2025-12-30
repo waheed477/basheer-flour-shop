@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit --skipLibCheck",
+    "prebuild": "npm run type-check",
+    "clean": "rm -rf dist node_modules package-lock.json",
+    "reinstall": "npm run clean && npm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -68,14 +72,17 @@
     "@tailwindcss/typography": "^0.5.19",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
+    "@types/wouter": "^2.10.3",
+    "@types/framer-motion": "^11.0.1",
     "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.6.3",
+    "typescript": "5.6.3",
     "vite": "^7.3.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
