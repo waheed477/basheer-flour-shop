@@ -15,17 +15,33 @@ const settingSchema = new mongoose.Schema({
 
 export const Setting = mongoose.model('Setting', settingSchema);
 
-// Default settings
+// Default settings with camelCase keys (frontend compatible)
 export const defaultSettings = [
-  { key: 'shop_name', value: 'Bashir Flour Shop' },
-  { key: 'shop_name_urdu', value: 'بشیر آٹے کی دکان' },
-  { key: 'whatsapp_number', value: '+923001234567' },
-  { key: 'phone_number', value: '+92421234567' },
+  { key: 'shopName', value: 'Bashir Flour Shop' },
+  { key: 'shopNameUrdu', value: 'بشیر آٹے کی دکان' },
+  { key: 'whatsappNumber', value: '+923001234567' },
+  { key: 'phoneNumber', value: '+92421234567' },
   { key: 'email', value: 'info@bashirflour.com' },
-  { key: 'address_en', value: '123 Main Street, Lahore, Pakistan' },
-  { key: 'address_urdu', value: '123 مرکزی سڑک، لاہور، پاکستان' },
-  { key: 'working_hours', value: '9:00 AM - 10:00 PM (Monday - Sunday)' },
-  { key: 'enable_whatsapp_button', value: 'true' },
-  { key: 'enable_online_orders', value: 'false' },
-  { key: 'maintenance_mode', value: 'false' },
+  { key: 'addressEn', value: '123 Main Street, Lahore, Pakistan' },
+  { key: 'addressUrdu', value: '123 مرکزی سڑک، لاہور، پاکستان' },
+  { key: 'workingHours', value: '9:00 AM - 10:00 PM (Monday - Sunday)' },
+  { key: 'enableWhatsAppButton', value: 'true' },
+  { key: 'enableOnlineOrders', value: 'false' },
+  { key: 'maintenanceMode', value: 'false' },
 ];
+
+// Helper function to ensure default settings exist
+export const ensureDefaultSettings = async () => {
+  try {
+    for (const setting of defaultSettings) {
+      await Setting.findOneAndUpdate(
+        { key: setting.key },
+        { value: setting.value },
+        { upsert: true, new: true }
+      );
+    }
+    console.log('✅ Default settings ensured');
+  } catch (error) {
+    console.error('❌ Error ensuring default settings:', error);
+  }
+};

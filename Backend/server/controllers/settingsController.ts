@@ -1,11 +1,14 @@
 import { Request, Response } from "express";
-import { Setting, defaultSettings } from "../models/Setting";
+import { Setting, defaultSettings, ensureDefaultSettings } from "../models/Setting";
 import { ApiResponse, UpdateSettingsRequest } from "@shared/schema";
 
 export const settingsController = {
   // Get all settings
   async getAll(req: Request, res: Response) {
     try {
+      // Ensure default settings exist
+      await ensureDefaultSettings();
+      
       const allSettings = await Setting.find({});
       
       // Convert array to object
@@ -14,22 +17,25 @@ export const settingsController = {
         return acc;
       }, {} as Record<string, string>);
 
-      // Ensure all default settings exist
-      for (const defaultSetting of defaultSettings) {
-        if (!settingsObj[defaultSetting.key]) {
-          settingsObj[defaultSetting.key] = defaultSetting.value;
-        }
-      }
+      // Parse boolean values
+      const parsedSettings = {
+        ...settingsObj,
+        enableWhatsAppButton: settingsObj.enableWhatsAppButton === 'true',
+        enableOnlineOrders: settingsObj.enableOnlineOrders === 'true',
+        maintenanceMode: settingsObj.maintenanceMode === 'true',
+      };
 
       const response: ApiResponse = {
         success: true,
-        data: settingsObj,
+        data: parsedSettings,
       };
       res.json(response);
     } catch (error) {
+      console.error('Error fetching settings:', error);
       const response: ApiResponse = {
         success: false,
         error: "Failed to fetch settings",
+        data: {} // Return empty object instead of failing
       };
       res.status(500).json(response);
     }
@@ -52,9 +58,12 @@ export const settingsController = {
       
       // Update each setting
       for (const [key, value] of Object.entries(updates)) {
+        // Convert boolean to string for storage
+        const stringValue = typeof value === 'boolean' ? value.toString() : value;
+        
         const updated = await Setting.findOneAndUpdate(
           { key },
-          { value },
+          { value: stringValue },
           { upsert: true, new: true }
         );
         updatedSettings[key] = updated.value;
@@ -67,6 +76,7 @@ export const settingsController = {
       };
       res.json(response);
     } catch (error) {
+      console.error('Error updating settings:', error);
       const response: ApiResponse = {
         success: false,
         error: "Failed to update settings",

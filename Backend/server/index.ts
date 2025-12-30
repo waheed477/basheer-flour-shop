@@ -388,28 +388,44 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
+// Line ~250-280 - DELETE route UPDATE:
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const product = await Product.findByIdAndDelete(id);
+    console.log('🔄 DELETE Request received - ID:', id);
+    console.log('ID Type:', typeof id);
+    console.log('ID Length:', id.length);
     
-    if (!product) {
+    // Check if product exists first
+    const productExists = await Product.findById(id);
+    console.log('Product found:', productExists ? 'Yes' : 'No');
+    
+    if (!productExists) {
+      // Get all products for debugging
+      const allProducts = await Product.find({}, '_id name');
+      console.log('All products in DB:', allProducts);
+      
       return res.status(404).json({
         success: false,
-        error: "Product not found",
+        error: `Product with ID ${id} not found. Total products: ${allProducts.length}`,
       });
     }
-
+    
+    const product = await Product.findByIdAndDelete(id);
+    
+    console.log('✅ Product deleted:', product?.name);
+    
     res.json({
       success: true,
       message: "Product deleted successfully",
+      deletedProduct: product,
     });
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error('❌ Error deleting product:', error);
     res.status(500).json({
       success: false,
-      error: "Failed to delete product",
+      error: "Failed to delete product: " + error.message,
     });
   }
 });
