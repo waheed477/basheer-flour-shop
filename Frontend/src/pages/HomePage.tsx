@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,26 @@ import { ProductCard } from "@/components/ui/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSettings } from "@/hooks/use-settings";
 import ImageSlider from "@/components/ui/image-slider";
+import { products as defaultProducts } from "@/data/products";
 
 export default function HomePage() {
   const { t, dir } = useLanguage();
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: settings, isLoading: settingsLoading } = useSettings();
+  
+  const [homeProducts, setHomeProducts] = useState(defaultProducts);
+
+  useEffect(() => {
+    const savedProducts = localStorage.getItem("flour_shop_products");
+    if (savedProducts) {
+      try {
+        const parsedProducts = JSON.parse(savedProducts);
+        setHomeProducts(parsedProducts.slice(0, 3)); // Show only 3 on homepage
+      } catch (error) {
+        console.error("Error loading products for homepage:", error);
+      }
+    }
+  }, []);
 
   const featuredProducts = products?.slice(0, 3) || [];
   
@@ -27,8 +43,8 @@ export default function HomePage() {
       "/shop-images/shop4.jpg"
     ].filter(img => img && img.trim() !== '');
 
-  const whatsappNumber = settings?.whatsappNumber || "923001234567";
-  const phoneNumber = settings?.phoneNumber || "+923001234567";
+    const whatsappNumber = settings?.whatsappNumber || "923008666593";
+    const phoneNumber = settings?.phoneNumber || "+923008666593";
   const cleanWhatsappNumber = whatsappNumber.replace(/[+\s]/g, '');
   
   const whatsappMessage = encodeURIComponent(
@@ -406,5 +422,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-

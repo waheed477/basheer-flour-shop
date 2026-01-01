@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { useLanguage } from "@/hooks/use-language";
-import { useProducts } from "@/hooks/use-products";
+import { products as defaultProducts } from "@/data/products";
 import { ProductCard } from "@/components/ui/product-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,23 +10,123 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Search, Grid, List } from "lucide-react";
+import { Filter, Search, Grid, List, RefreshCw } from "lucide-react";
+
+interface Product {
+  id: number;
+  name: string;
+  nameUrdu: string;
+  price: number;
+  category: "wheat" | "flour";
+  image: string;
+  stock: number;
+  description?: string;
+  unit: "Kg" | "Maan";
+}
 
 export default function ProductsPage() {
   const { t, dir } = useLanguage();
-  const { data: products, isLoading } = useProducts();
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  const wheatProducts = products?.filter(p => p.category === 'wheat') || [];
-  const flourProducts = products?.filter(p => p.category === 'flour') || [];
+  // Fix image paths function
+  const fixImagePaths = (products: Product[]): Product[] => {
+    return products.map(product => {
+      let imagePath = product.image;
+      
+      // If image path doesn't start with /shop-images/, fix it
+      if (!imagePath.startsWith('/shop-images/')) {
+        // Determine which image to use based on product
+        if (product.category === "wheat") {
+          // Alternate between wheat.jpg and wheat1.jpg for wheat products
+          imagePath = product.id % 2 === 1 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
+        } else {
+          imagePath = '/shop-images/atta.jpg';
+        }
+      }
+      
+      // Also fix any old paths
+      const oldPaths = ['/shop-images/shop1.jpg', '/shop-images/shop2.jpg', '/shop-images/shop3.jpg', '/shop-images/shop4.jpg'];
+      if (oldPaths.includes(imagePath)) {
+        if (product.category === "wheat") {
+          imagePath = product.id % 2 === 1 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
+        } else {
+          imagePath = '/shop-images/atta.jpg';
+        }
+      }
+      
+      return {
+        ...product,
+        image: imagePath
+      };
+    });
+  };
 
-  // Filter products based on search and category
-  const filteredProducts = products?.filter(product => {
+  // Load products from localStorage
+  useEffect(() => {
+    const loadProducts = () => {
+      setIsLoading(true);
+      try {
+        const savedProducts = localStorage.getItem("flour_shop_products");
+        
+        if (savedProducts) {
+          const parsedProducts = JSON.parse(savedProducts);
+          const fixedProducts = fixImagePaths(parsedProducts);
+          setAllProducts(fixedProducts);
+          
+          // Save fixed products back (only if different)
+          if (JSON.stringify(parsedProducts) !== JSON.stringify(fixedProducts)) {
+            localStorage.setItem("flour_shop_products", JSON.stringify(fixedProducts));
+          }
+        } else {
+          // Use default products
+          const fixedDefaultProducts = fixImagePaths(defaultProducts);
+          setAllProducts(fixedDefaultProducts);
+          localStorage.setItem("flour_shop_products", JSON.stringify(fixedDefaultProducts));
+        }
+      } catch (error) {
+        console.error("Error loading products:", error);
+        const fixedDefaultProducts = fixImagePaths(defaultProducts);
+        setAllProducts(fixedDefaultProducts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  const refreshProducts = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      const savedProducts = localStorage.getItem("flour_shop_products");
+      if (savedProducts) {
+        const parsedProducts = JSON.parse(savedProducts);
+        const fixedProducts = fixImagePaths(parsedProducts);
+        setAllProducts(fixedProducts);
+      }
+      setIsLoading(false);
+    }, 500);
+  };
+
+  const resetToDefault = () => {
+    const fixedDefaultProducts = fixImagePaths(defaultProducts);
+    setAllProducts(fixedDefaultProducts);
+    localStorage.setItem("flour_shop_products", JSON.stringify(fixedDefaultProducts));
+    alert("✅ Products reset to default with correct images!");
+  };
+
+  const wheatProducts = allProducts.filter(p => p.category === 'wheat');
+  const flourProducts = allProducts.filter(p => p.category === 'flour');
+
+  // Filter products
+  const filteredProducts = allProducts.filter(product => {
     const matchesSearch = searchQuery === "" || 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      product.nameUrdu.includes(searchQuery);
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -39,7 +139,7 @@ export default function ProductsPage() {
     searchQuery === "" || product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Auto-switch to list view on mobile for better UX
+  // Auto-switch to list view on mobile
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 768) {
@@ -47,7 +147,7 @@ export default function ProductsPage() {
       }
     };
     
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -60,28 +160,57 @@ export default function ProductsPage() {
       
       <main className="flex-grow py-6 sm:py-8 md:py-12 lg:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header Section - Responsive */}
+          {/* Header Section */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8 sm:mb-12" 
             dir={dir}
           >
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-3 sm:mb-4 text-foreground">
-              {t("products.title")}
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              {dir === 'ltr' 
-                ? "Browse our selection of high-quality grains and flour, freshly processed for your daily needs."
-                : "اعلیٰ معیار کے اناج اور آٹے کے ہمارے انتخاب کو براؤز کریں، آپ کی روزمرہ کی ضروریات کے لیے تازہ پروسیس شدہ۔"
-              }
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+              <div className="text-left mb-4 sm:mb-0">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-3 sm:mb-4 text-foreground">
+                  {t("products.title")}
+                </h1>
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl">
+                  {dir === 'ltr' 
+                    ? "Browse our selection of high-quality grains and flour"
+                    : "اعلیٰ معیار کے اناج اور آٹے کے ہمارے انتخاب کو براؤز کریں"
+                  }
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={refreshProducts}
+                  className="gap-2"
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Refresh</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={resetToDefault}
+                  className="gap-2"
+                >
+                  Reset Data
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">
+              {allProducts.length} products available | 
+              Wheat: {wheatProducts.length} | 
+              Flour: {flourProducts.length}
             </p>
           </motion.div>
 
-          {/* Search and Filter Section - Responsive */}
+          {/* Search and Filter Section */}
           <div className="mb-8 sm:mb-12">
             <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              {/* Search Input - Full width on mobile, flexible on desktop */}
+              {/* Search Input */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                 <Input
@@ -93,7 +222,7 @@ export default function ProductsPage() {
                 />
               </div>
               
-              {/* View Toggle - Hidden on mobile (auto list view) */}
+              {/* View Toggle */}
               {!isMobile && (
                 <div className="flex items-center gap-2">
                   <Button
@@ -118,7 +247,7 @@ export default function ProductsPage() {
               )}
             </div>
 
-            {/* Category Filters - Responsive */}
+            {/* Category Filters */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <div className="flex-1">
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -147,21 +276,10 @@ export default function ProductsPage() {
                   {dir === 'ltr' ? 'Clear Filters' : 'فلٹرز صاف کریں'}
                 </Button>
               )}
-              
-              {/* Filter Button with touch target */}
-              <Button 
-                variant="outline" 
-                className="gap-2 touch-target py-2 sm:py-3 text-sm sm:text-base"
-              >
-                <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="hidden sm:inline">
-                  {dir === 'ltr' ? 'More Filters' : 'مزید فلٹرز'}
-                </span>
-              </Button>
             </div>
           </div>
 
-          {/* Products Display - Responsive Tabs */}
+          {/* Products Display - Tabs */}
           <Tabs defaultValue="all" className="w-full" dir={dir}>
             <div className="flex justify-center mb-8 sm:mb-12 overflow-x-auto">
               <TabsList className="bg-secondary/50 p-1 rounded-full border border-border min-w-max">
@@ -169,19 +287,19 @@ export default function ProductsPage() {
                   value="all" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.title")}
+                  {t("products.title")} ({allProducts.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="wheat" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.wheat")}
+                  {t("products.wheat")} ({wheatProducts.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="flour" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.flour")}
+                  {t("products.flour")} ({flourProducts.length})
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -271,16 +389,25 @@ export default function ProductsPage() {
             </TabsContent>
           </Tabs>
 
-          {/* Load More Button - Responsive */}
-          {!isLoading && filteredProducts && filteredProducts.length > 0 && (
-            <div className="text-center mt-8 sm:mt-12">
-              <Button 
-                size={isMobile ? "touch" : "lg"}
-                className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base"
-                variant="outline"
-              >
-                {dir === 'ltr' ? 'Load More Products' : 'مزید مصنوعات دیکھیں'}
-              </Button>
+          {/* Debug Info (Remove after testing) */}
+          {!isLoading && (
+            <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs">
+              <p className="font-bold">Image Debug:</p>
+              {allProducts.map(p => (
+                <div key={p.id} className="flex items-center gap-2">
+                  <span>{p.name}:</span>
+                  <span className="text-blue-600">{p.image}</span>
+                  <img 
+                    src={p.image} 
+                    alt="test" 
+                    className="w-8 h-8 object-cover rounded"
+                    onError={(e) => {
+                      console.error("Failed to load:", p.image);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -291,7 +418,7 @@ export default function ProductsPage() {
   );
 }
 
-// Updated ProductSkeleton component with view mode support
+// ProductSkeleton component
 function ProductSkeleton({ viewMode = "grid", isMobile = false }: { viewMode?: "grid" | "list"; isMobile?: boolean }) {
   if (viewMode === "list" || isMobile) {
     return (

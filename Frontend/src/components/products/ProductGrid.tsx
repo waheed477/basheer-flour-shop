@@ -2,8 +2,19 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { ResponsiveGrid, ResponsiveCardGrid } from "@/components/layout/ResponsiveGrid"
 import { ProductCard } from "./ProductCard"
-import type { Product } from "@shared/schema"
 import { useBreakpoint } from "@/utils/responsive"
+
+// ✅ Define Product interface locally
+interface Product {
+  id: number;
+  name: string;
+  nameUrdu: string;
+  price: number;
+  category: "wheat" | "flour";
+  image: string;
+  stock: number;
+  description?: string;
+}
 
 export interface ProductGridProps extends React.HTMLAttributes<HTMLDivElement> {
   products: Product[]
@@ -107,20 +118,31 @@ export function MobileProductList({
           className="flex gap-4 p-4 bg-card rounded-lg border"
         >
           <div className="w-24 h-24 bg-muted rounded-lg flex-shrink-0">
-            {/* Product image placeholder */}
+            <img 
+              src={product.image} 
+              alt={product.name}
+              className="w-full h-full object-cover rounded-lg"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/shop-images/shop1.jpg"
+              }}
+            />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold truncate">{product.name}</h3>
             <p className="text-sm text-muted-foreground line-clamp-2">
-              {product.descriptionEn}
+              {product.description || ""}
             </p>
             <div className="flex items-center justify-between mt-2">
               <span className="font-bold text-primary">
-                Rs {product.price} / {product.unit}
+                Rs {product.price} / {product.category === "wheat" ? "Maan" : "Kg"}
               </span>
-              <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm touch-target">
-                View
-              </button>
+              <a 
+                href={`https://wa.me/923008666593?text=${encodeURIComponent(`Hello! I want to order ${product.name}. Price: Rs ${product.price}`)}`}
+                target="_blank"
+                className="px-4 py-2 bg-green-600 text-white rounded-md text-sm touch-target"
+              >
+                WhatsApp
+              </a>
             </div>
           </div>
         </div>

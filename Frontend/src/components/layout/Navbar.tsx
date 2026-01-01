@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Wheat, Menu, X, Globe, Phone, ShoppingBag, LogIn } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
+import { Settings } from "lucide-react"; // Add this import
 export function Navbar() {
   const { t, language, setLanguage, dir } = useLanguage();
   const [location] = useLocation();
@@ -23,6 +23,10 @@ export function Navbar() {
       <Link href="/contact" className={`text-base font-medium transition-colors hover:text-primary ${isActive("/contact") ? "text-primary font-bold" : "text-foreground/80"}`}>
         {t("nav.contact")}
       </Link>
+      <Link href="/settings" className={`text-base font-medium transition-colors hover:text-primary ${isActive("/settings") ? "text-primary font-bold" : "text-foreground/80"}`}>
+      <Settings className="h-4 w-4 inline mr-1" />
+      Settings
+    </Link>
     </>
   );
 
@@ -139,6 +143,14 @@ export function Navbar() {
                       <LogIn className="h-5 w-5" />
                       {t("nav.admin")}
                     </Link>
+                    <Link 
+  href="/settings" 
+  onClick={() => setIsMobileOpen(false)} 
+  className={`text-lg font-medium py-3 px-4 rounded-lg transition-colors ${isActive("/settings") ? "bg-primary/10 text-primary" : "hover:bg-secondary/50"}`}
+>
+  <Settings className="h-5 w-5 inline mr-2" />
+  Settings
+</Link>
                   </div>
                   
                   {/* Language Switcher - Mobile Menu */}
