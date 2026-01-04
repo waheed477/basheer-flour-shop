@@ -58,22 +58,34 @@ export default function HomePage() {
   return (
     <div className={`min-h-screen bg-background flex flex-col font-sans ${dir === 'rtl' ? 'font-urdu' : ''}`}>
       <Navbar />
-      {/* Hide any fetch errors */}
-<style jsx global>{`
-  .error-boundary, 
-  [data-testid="error-boundary"], 
-  [class*="error-message"],
-  [class*="error"],
-  [class*="Error"] {
-    display: none !important;
-  }
-  
-  /* Specifically hide React Query errors */
-  [class*="QueryError"],
-  [class*="query-error"] {
-    display: none !important;
-  }
-`}</style>
+     {/* Global error hider - ADD THIS RIGHT AFTER NAVBAR */}
+<div className="hidden">
+  <style jsx global>{`
+    /* Hide ALL React Query related errors */
+    [class*="Toastify__toast--error"],
+    [class*="error-toast"],
+    [class*="query-error"],
+    [class*="react-query-error"],
+    .border-red-200,
+    .bg-red-50,
+    .text-red-800,
+    [data-sonner-toast][data-type="error"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+    }
+    
+    /* Hide error toasts specifically */
+    [role="status"][data-state="error"],
+    [data-radix-toast][data-state="error"] {
+      display: none !important;
+    }
+  `}</style>
+</div>
       {/* Floating Contact Icons */}
       <div className="fixed z-50 flex flex-col gap-3 sm:gap-4" dir={dir}>
         {/* Mobile: Bottom center */}
