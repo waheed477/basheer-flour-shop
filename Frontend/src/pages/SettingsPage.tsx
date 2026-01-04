@@ -6,47 +6,73 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Save, Lock, LogOut, Plus, Trash2 } from "lucide-react";
 
-// Initial products data
-const initialProducts = [
+// Updated Product Interface to match data/products.ts
+interface Product {
+  id: number;
+  nameEn: string;
+  nameUr: string;
+  descriptionEn?: string;
+  descriptionUr?: string;
+  price: number;
+  originalPrice?: number;
+  category: "wheat" | "flour";
+  image: string;
+  stock: number;
+  unit: "kg" | "maan";
+  isBestSeller?: boolean;
+  isNew?: boolean;
+}
+
+// Initial products data - Updated to match new structure
+const initialProducts: Product[] = [
   {
     id: 1,
-    name: "Premium Wheat",
-    nameUrdu: "پریمیم گندم",
+    nameEn: "Premium Wheat",
+    nameUr: "پریمیم گندم",
     price: 3200,
-    category: "wheat" as const,
+    originalPrice: 3500,
+    category: "wheat",
     image: "/shop-images/wheat.jpg",
     stock: 50,
-    description: "Premium quality wheat, perfect for homemade atta. Fresh from local farms.",
-    unit: "Maan" as const
+    descriptionEn: "Premium quality wheat, perfect for homemade atta. Fresh from local farms.",
+    descriptionUr: "پریمیم معیار کی گندم، گھر کے آٹے کے لیے بہترین۔ مقامی فارموں سے تازہ۔",
+    unit: "maan",
+    isBestSeller: true
   },
   {
     id: 2,
-    name: "Sharbati Wheat",
-    nameUrdu: "شربتی گندم",
+    nameEn: "Sharbati Wheat",
+    nameUr: "شربتی گندم",
     price: 3500,
-    category: "wheat" as const,
+    originalPrice: 3800,
+    category: "wheat",
     image: "/shop-images/wheat1.jpg",
     stock: 30,
-    description: "Special Sharbati wheat, soft and rich texture. Imported quality.",
-    unit: "Maan" as const
+    descriptionEn: "Special Sharbati wheat, soft and rich texture. Imported quality.",
+    descriptionUr: "خصوصی شربتی گندم، نرم اور بھرپور ساخت۔ درآمدی معیار۔",
+    unit: "maan",
+    isNew: true
   },
   {
     id: 3,
-    name: "Fresh Chakki Atta",
-    nameUrdu: "تازہ چکی آٹا",
+    nameEn: "Fresh Chakki Atta",
+    nameUr: "تازہ چکی آٹا",
     price: 900,
-    category: "flour" as const,
+    originalPrice: 950,
+    category: "flour",
     image: "/shop-images/atta.jpg",
     stock: 200,
-    description: "Freshly ground atta, stone chakki processed. No preservatives added.",
-    unit: "Kg" as const
+    descriptionEn: "Freshly ground atta, stone chakki processed. No preservatives added.",
+    descriptionUr: "تازہ پسا ہوا آٹا، پتھر کی چکی سے تیار۔ کوئی پریزرویٹوز شامل نہیں۔",
+    unit: "kg",
+    isBestSeller: true
   }
 ];
 
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [nextId, setNextId] = useState(4);
 
@@ -70,7 +96,7 @@ export default function SettingsPage() {
         const parsedProducts = JSON.parse(savedProducts);
         setProducts(parsedProducts);
         // Find max ID for next product
-        const maxId = Math.max(...parsedProducts.map((p: any) => p.id));
+        const maxId = Math.max(...parsedProducts.map((p: Product) => p.id));
         setNextId(maxId + 1);
       } catch (error) {
         console.error("Error loading saved products:", error);
@@ -96,23 +122,26 @@ export default function SettingsPage() {
     showNotification("ℹ️ Logged out successfully.", "info");
   };
 
-  const updateProduct = (id: number, field: string, value: string | number) => {
+  const updateProduct = (id: number, field: string, value: any) => {
     setProducts(prev => prev.map(product => 
       product.id === id ? { ...product, [field]: value } : product
     ));
   };
 
   const addNewProduct = () => {
-    const newProduct = {
+    const newProduct: Product = {
       id: nextId,
-      name: "New Product",
-      nameUrdu: "نیا پروڈکٹ",
+      nameEn: "New Product",
+      nameUr: "نیا پروڈکٹ",
       price: 0,
-      category: "flour" as const,
+      category: "flour",
       image: "/shop-images/atta.jpg",
       stock: 0,
-      description: "",
-      unit: "Kg" as const
+      descriptionEn: "",
+      descriptionUr: "",
+      unit: "kg",
+      isBestSeller: false,
+      isNew: true
     };
     
     setProducts(prev => [...prev, newProduct]);
@@ -133,7 +162,27 @@ export default function SettingsPage() {
   };
 
   const saveChanges = () => {
-    localStorage.setItem("flour_shop_products", JSON.stringify(products));
+    // Fix image paths before saving
+    const fixedProducts = products.map(product => {
+      let imagePath = product.image || '';
+      
+      // Ensure image path is correct
+      if (!imagePath.startsWith('/shop-images/')) {
+        if (product.category === "wheat") {
+          imagePath = '/shop-images/wheat.jpg';
+        } else {
+          imagePath = '/shop-images/atta.jpg';
+        }
+      }
+      
+      return {
+        ...product,
+        image: imagePath
+      };
+    });
+    
+    localStorage.setItem("flour_shop_products", JSON.stringify(fixedProducts));
+    setProducts(fixedProducts);
     showNotification("✅ All changes saved successfully!", "success");
     
     // Reload page to reflect changes
@@ -255,14 +304,34 @@ export default function SettingsPage() {
                     <div className="h-48 bg-gray-100 rounded-lg overflow-hidden border">
                       <img
                         src={product.image}
-                        alt={product.name}
+                        alt={product.nameEn}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/shop-images/atta.jpg";
+                          (e.target as HTMLImageElement).src = product.category === 'wheat' 
+                            ? '/shop-images/wheat.jpg' 
+                            : '/shop-images/atta.jpg';
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <Button 
+                          variant={product.isBestSeller ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => updateProduct(product.id, "isBestSeller", !product.isBestSeller)}
+                          className="flex-1 gap-1"
+                        >
+                          {product.isBestSeller ? '✅' : '⭐'} Best Seller
+                        </Button>
+                        <Button 
+                          variant={product.isNew ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => updateProduct(product.id, "isNew", !product.isNew)}
+                          className="flex-1 gap-1"
+                        >
+                          {product.isNew ? '✅' : '🆕'} New
+                        </Button>
+                      </div>
                       <Button 
                         variant="destructive"
                         size="sm"
@@ -281,32 +350,58 @@ export default function SettingsPage() {
                   {/* Product Form */}
                   <div className="md:w-3/4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Product Name */}
+                      {/* Product Name (English) */}
                       <div className="space-y-2">
-                        <Label htmlFor={`name-${product.id}`}>Product Name (English)</Label>
+                        <Label htmlFor={`nameEn-${product.id}`}>Product Name (English)</Label>
                         <Input
-                          id={`name-${product.id}`}
-                          value={product.name}
-                          onChange={(e) => updateProduct(product.id, "name", e.target.value)}
+                          id={`nameEn-${product.id}`}
+                          value={product.nameEn}
+                          onChange={(e) => updateProduct(product.id, "nameEn", e.target.value)}
                           className="h-11"
                         />
                       </div>
                       
-                      {/* Urdu Name */}
+                      {/* Product Name (Urdu) */}
                       <div className="space-y-2">
-                        <Label htmlFor={`nameUrdu-${product.id}`}>Product Name (Urdu)</Label>
+                        <Label htmlFor={`nameUr-${product.id}`}>Product Name (Urdu)</Label>
                         <Input
-                          id={`nameUrdu-${product.id}`}
-                          value={product.nameUrdu}
-                          onChange={(e) => updateProduct(product.id, "nameUrdu", e.target.value)}
+                          id={`nameUr-${product.id}`}
+                          value={product.nameUr}
+                          onChange={(e) => updateProduct(product.id, "nameUr", e.target.value)}
                           className="h-11"
+                          dir="rtl"
+                        />
+                      </div>
+                      
+                      {/* Description (English) */}
+                      <div className="space-y-2">
+                        <Label htmlFor={`descEn-${product.id}`}>Description (English)</Label>
+                        <Textarea
+                          id={`descEn-${product.id}`}
+                          value={product.descriptionEn || ""}
+                          onChange={(e) => updateProduct(product.id, "descriptionEn", e.target.value)}
+                          className="min-h-[80px]"
+                          placeholder="English description"
+                        />
+                      </div>
+                      
+                      {/* Description (Urdu) */}
+                      <div className="space-y-2">
+                        <Label htmlFor={`descUr-${product.id}`}>Description (Urdu)</Label>
+                        <Textarea
+                          id={`descUr-${product.id}`}
+                          value={product.descriptionUr || ""}
+                          onChange={(e) => updateProduct(product.id, "descriptionUr", e.target.value)}
+                          className="min-h-[80px]"
+                          placeholder="اردو تفصیل"
+                          dir="rtl"
                         />
                       </div>
                       
                       {/* Price */}
                       <div className="space-y-2">
                         <Label htmlFor={`price-${product.id}`}>
-                          Price (Rs.) per {product.unit === "Maan" ? "Maan (40Kg)" : "Kg"}
+                          Price (Rs.) per {product.unit === "maan" ? "Maan (40Kg)" : "Kg"}
                         </Label>
                         <Input
                           id={`price-${product.id}`}
@@ -314,6 +409,21 @@ export default function SettingsPage() {
                           value={product.price}
                           onChange={(e) => updateProduct(product.id, "price", parseInt(e.target.value) || 0)}
                           className="h-11"
+                        />
+                      </div>
+                      
+                      {/* Original Price */}
+                      <div className="space-y-2">
+                        <Label htmlFor={`originalPrice-${product.id}`}>
+                          Original Price (Rs.) <span className="text-gray-500 text-sm">(for discount)</span>
+                        </Label>
+                        <Input
+                          id={`originalPrice-${product.id}`}
+                          type="number"
+                          value={product.originalPrice || ""}
+                          onChange={(e) => updateProduct(product.id, "originalPrice", e.target.value ? parseInt(e.target.value) : undefined)}
+                          className="h-11"
+                          placeholder="Leave empty for no discount"
                         />
                       </div>
                       
@@ -351,11 +461,11 @@ export default function SettingsPage() {
                         <select
                           id={`unit-${product.id}`}
                           value={product.unit}
-                          onChange={(e) => updateProduct(product.id, "unit", e.target.value as "Kg" | "Maan")}
+                          onChange={(e) => updateProduct(product.id, "unit", e.target.value as "kg" | "maan")}
                           className="w-full h-11 px-3 py-2 border rounded-md"
                         >
-                          <option value="Maan">Maan (40Kg)</option>
-                          <option value="Kg">Kilogram (Kg)</option>
+                          <option value="maan">Maan (40Kg)</option>
+                          <option value="kg">Kilogram (Kg)</option>
                         </select>
                       </div>
                       
@@ -405,19 +515,7 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     
-                    {/* Description */}
-                    <div className="space-y-2">
-                      <Label htmlFor={`desc-${product.id}`}>Description</Label>
-                      <Textarea
-                        id={`desc-${product.id}`}
-                        value={product.description || ""}
-                        onChange={(e) => updateProduct(product.id, "description", e.target.value)}
-                        className="min-h-[80px]"
-                        placeholder="Add product description"
-                      />
-                    </div>
-                    
-                    {/* Product Preview */}
+                    {/* Live Preview */}
                     <div className="pt-4 border-t">
                       <Label>Live Preview:</Label>
                       <div className="mt-2 p-3 bg-gray-50 rounded-lg">
@@ -430,11 +528,19 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <p className="font-bold">{product.name}</p>
+                            <p className="font-bold">{product.nameEn}</p>
                             <p className="text-sm text-gray-600">
-                              Rs {product.price} / {product.unit === "Maan" ? "Maan" : "Kg"} | 
+                              Rs {product.price} / {product.unit === "maan" ? "Maan" : "Kg"} | 
                               Stock: {product.stock} {product.unit}
                             </p>
+                            <div className="flex gap-2 mt-1">
+                              {product.isBestSeller && (
+                                <span className="bg-primary text-white px-2 py-0.5 rounded text-xs">Best Seller</span>
+                              )}
+                              {product.isNew && (
+                                <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">New</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -453,6 +559,8 @@ export default function SettingsPage() {
             <ul className="space-y-1 text-blue-700 text-sm">
               <li>• <strong>Wheat Products:</strong> Set Category = "Wheat" and Unit = "Maan" (Price per 40Kg)</li>
               <li>• <strong>Flour Products:</strong> Set Category = "Flour" and Unit = "Kg" (Price per Kg)</li>
+              <li>• <strong>Best Seller/New:</strong> Click buttons to toggle badges</li>
+              <li>• <strong>Original Price:</strong> Set for showing discounted price</li>
               <li>• Edit any field and click "Save All Changes"</li>
               <li>• Use image buttons to quickly assign images</li>
               <li>• Active image button shows in blue color</li>

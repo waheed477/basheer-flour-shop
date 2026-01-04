@@ -10,18 +10,26 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Filter, Search, Grid, List, RefreshCw } from "lucide-react";
+import { Filter, Search, Grid, List, RefreshCw, Wheat, Phone } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
+import { useSettings } from "@/hooks/use-settings";
+import { Link } from "wouter";
 
+// Updated Product Interface to match data/products.ts
 interface Product {
   id: number;
-  name: string;
-  nameUrdu: string;
+  nameEn: string;
+  nameUr: string;
+  descriptionEn?: string;
+  descriptionUr?: string;
   price: number;
+  originalPrice?: number;
   category: "wheat" | "flour";
   image: string;
   stock: number;
-  description?: string;
-  unit: "Kg" | "Maan";
+  unit: "kg" | "maan";
+  isBestSeller?: boolean;
+  isNew?: boolean;
 }
 
 export default function ProductsPage() {
@@ -31,18 +39,30 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const { data: settings, isLoading: settingsLoading } = useSettings();
+  
+  const whatsappNumber = settings?.whatsappNumber || "923008666593";
+  const phoneNumber = settings?.phoneNumber || "+923008666593";
+  const cleanWhatsappNumber = whatsappNumber.replace(/[+\s]/g, '');
 
-  // Fix image paths function
+  // Fix image paths function - Updated to match new structure
   const fixImagePaths = (products: Product[]): Product[] => {
     return products.map(product => {
-      let imagePath = product.image;
+      let imagePath = product.image || '';
       
-      // If image path doesn't start with /shop-images/, fix it
-      if (!imagePath.startsWith('/shop-images/')) {
-        // Determine which image to use based on product
+      // If no image or invalid path, assign based on category
+      if (!imagePath || imagePath.trim() === '') {
         if (product.category === "wheat") {
-          // Alternate between wheat.jpg and wheat1.jpg for wheat products
-          imagePath = product.id % 2 === 1 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
+          imagePath = product.id % 2 === 0 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
+        } else {
+          imagePath = '/shop-images/atta.jpg';
+        }
+      }
+      
+      // Fix paths that don't start with /shop-images/
+      if (!imagePath.startsWith('/shop-images/')) {
+        if (product.category === "wheat") {
+          imagePath = '/shop-images/wheat.jpg';
         } else {
           imagePath = '/shop-images/atta.jpg';
         }
@@ -52,7 +72,7 @@ export default function ProductsPage() {
       const oldPaths = ['/shop-images/shop1.jpg', '/shop-images/shop2.jpg', '/shop-images/shop3.jpg', '/shop-images/shop4.jpg'];
       if (oldPaths.includes(imagePath)) {
         if (product.category === "wheat") {
-          imagePath = product.id % 2 === 1 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
+          imagePath = product.id % 2 === 0 ? '/shop-images/wheat.jpg' : '/shop-images/wheat1.jpg';
         } else {
           imagePath = '/shop-images/atta.jpg';
         }
@@ -122,22 +142,14 @@ export default function ProductsPage() {
   const wheatProducts = allProducts.filter(p => p.category === 'wheat');
   const flourProducts = allProducts.filter(p => p.category === 'flour');
 
-  // Filter products
+  // Filter products for search
   const filteredProducts = allProducts.filter(product => {
     const matchesSearch = searchQuery === "" || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.nameUrdu.includes(searchQuery);
+      product.nameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.nameUr.includes(searchQuery);
     const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
-
-  const filteredWheatProducts = wheatProducts.filter(product =>
-    searchQuery === "" || product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  const filteredFlourProducts = flourProducts.filter(product =>
-    searchQuery === "" || product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   // Auto-switch to list view on mobile
   useEffect(() => {
@@ -155,7 +167,7 @@ export default function ProductsPage() {
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans">
+    <div className={`min-h-screen bg-background flex flex-col font-sans ${dir === 'rtl' ? 'font-urdu' : ''}`}>
       <Navbar />
       
       <main className="flex-grow py-6 sm:py-8 md:py-12 lg:py-16">
@@ -170,7 +182,7 @@ export default function ProductsPage() {
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
               <div className="text-left mb-4 sm:mb-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display mb-3 sm:mb-4 text-foreground">
-                  {t("products.title")}
+                  {dir === 'ltr' ? 'Our Products' : 'ہماری مصنوعات'}
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl">
                   {dir === 'ltr' 
@@ -256,8 +268,8 @@ export default function ProductsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{dir === 'ltr' ? "All Products" : "تمام مصنوعات"}</SelectItem>
-                    <SelectItem value="wheat">{t("products.wheat")}</SelectItem>
-                    <SelectItem value="flour">{t("products.flour")}</SelectItem>
+                    <SelectItem value="wheat">{dir === 'ltr' ? "Wheat" : "گندم"}</SelectItem>
+                    <SelectItem value="flour">{dir === 'ltr' ? "Flour" : "آٹا"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -287,129 +299,365 @@ export default function ProductsPage() {
                   value="all" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.title")} ({allProducts.length})
+                  {dir === 'ltr' ? 'All Products' : 'تمام مصنوعات'} ({allProducts.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="wheat" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.wheat")} ({wheatProducts.length})
+                  {dir === 'ltr' ? 'Wheat' : 'گندم'} ({wheatProducts.length})
                 </TabsTrigger>
                 <TabsTrigger 
                   value="flour" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {t("products.flour")} ({flourProducts.length})
+                  {dir === 'ltr' ? 'Flour' : 'آٹا'} ({flourProducts.length})
                 </TabsTrigger>
               </TabsList>
             </div>
 
             {/* All Products Tab */}
             <TabsContent value="all" className="mt-0">
-              <div className={viewMode === "grid" && !isMobile 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
-                : "space-y-4 sm:space-y-6"
-              } dir={dir}>
-                {isLoading ? (
-                  Array.from({ length: isMobile ? 3 : 6 }).map((_, n) => (
+              {isLoading ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {Array.from({ length: isMobile ? 3 : 6 }).map((_, n) => (
                     <ProductSkeleton key={n} viewMode={viewMode} isMobile={isMobile} />
-                  ))
-                ) : filteredProducts && filteredProducts.length > 0 ? (
-                  filteredProducts.map(product => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      viewMode={viewMode}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground">
-                      {dir === 'ltr' ? 'No products found' : 'کوئی مصنوعات نہیں ملیں'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : filteredProducts.length > 0 ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {filteredProducts.map(product => (
+                    <div key={product.id} className="h-full">
+                      {/* Custom Product Card WITH WhatsApp & Call */}
+                      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                        {/* Product Image */}
+                        <div className="relative h-56 sm:h-64 overflow-hidden bg-gray-100">
+                          <img 
+                            src={product.image || (product.category === 'wheat' ? '/shop-images/wheat.jpg' : '/shop-images/atta.jpg')} 
+                            alt={dir === 'ltr' ? product.nameEn : product.nameUr}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* Badges */}
+                          <div className="absolute top-3 left-3 flex gap-2">
+                            {product.isBestSeller && (
+                              <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'Best Seller' : 'بیسٹ سیلر'}
+                              </div>
+                            )}
+                            {product.isNew && (
+                              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'New' : 'نیا'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Product Details */}
+                        <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                          <h3 className={`text-xl font-bold text-gray-900 mb-2 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? product.nameEn : product.nameUr}
+                          </h3>
+                          
+                          <p className={`text-gray-600 text-sm mb-4 flex-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? (product.descriptionEn || '') : (product.descriptionUr || '')}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-auto mb-3">
+                            <div>
+                              <div className="text-2xl font-bold text-primary">
+                                Rs {product.price}
+                                <span className="text-sm text-gray-500 font-normal">/{product.unit}</span>
+                              </div>
+                              {product.originalPrice && (
+                                <div className="text-sm text-gray-400 line-through">
+                                  Rs {product.originalPrice}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Stock Info */}
+                            <div className="text-sm text-gray-600">
+                              {dir === 'ltr' ? 'Stock:' : 'اسٹاک:'} {product.stock} {product.unit}
+                            </div>
+                          </div>
+                          
+                          {/* WhatsApp & Call Buttons */}
+                          <div className="flex gap-2 mt-2">
+                            {/* WhatsApp Button */}
+                            <a
+                              href={`https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(
+                                dir === 'ltr'
+                                  ? `Hi, I want to order ${product.nameEn} (Rs ${product.price}/${product.unit}). Please confirm availability.`
+                                  : `السلام علیکم، میں ${product.nameUr} (${product.price} روپے/${product.unit}) آرڈر کرنا چاہتا ہوں۔ براہ کرم دستیابی کی تصدیق کریں۔`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <SiWhatsapp className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'WhatsApp' : 'واٹس ایپ'}</span>
+                            </a>
+                            
+                            {/* Call Button */}
+                            <a
+                              href={`tel:${phoneNumber}`}
+                              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <Phone className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'Call' : 'کال'}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {dir === 'ltr' ? 'No products found' : 'کوئی مصنوعات نہیں ملیں'}
+                  </p>
+                </div>
+              )}
             </TabsContent>
             
             {/* Wheat Products Tab */}
             <TabsContent value="wheat" className="mt-0">
-              <div className={viewMode === "grid" && !isMobile 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
-                : "space-y-4 sm:space-y-6"
-              } dir={dir}>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, n) => (
+              {isLoading ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {Array.from({ length: 3 }).map((_, n) => (
                     <ProductSkeleton key={n} viewMode={viewMode} isMobile={isMobile} />
-                  ))
-                ) : filteredWheatProducts && filteredWheatProducts.length > 0 ? (
-                  filteredWheatProducts.map(product => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      viewMode={viewMode}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground">
-                      {dir === 'ltr' ? 'No wheat products found' : 'کوئی گندم کی مصنوعات نہیں ملیں'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : wheatProducts.length > 0 ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {wheatProducts.map(product => (
+                    <div key={product.id} className="h-full">
+                      {/* Custom Product Card WITH WhatsApp & Call */}
+                      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                        {/* Product Image */}
+                        <div className="relative h-56 sm:h-64 overflow-hidden bg-gray-100">
+                          <img 
+                            src={product.image || '/shop-images/wheat.jpg'} 
+                            alt={dir === 'ltr' ? product.nameEn : product.nameUr}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* Badges */}
+                          <div className="absolute top-3 left-3 flex gap-2">
+                            {product.isBestSeller && (
+                              <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'Best Seller' : 'بیسٹ سیلر'}
+                              </div>
+                            )}
+                            {product.isNew && (
+                              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'New' : 'نیا'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Product Details */}
+                        <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                          <h3 className={`text-xl font-bold text-gray-900 mb-2 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? product.nameEn : product.nameUr}
+                          </h3>
+                          
+                          <p className={`text-gray-600 text-sm mb-4 flex-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? (product.descriptionEn || '') : (product.descriptionUr || '')}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-auto mb-3">
+                            <div>
+                              <div className="text-2xl font-bold text-primary">
+                                Rs {product.price}
+                                <span className="text-sm text-gray-500 font-normal">/{product.unit}</span>
+                              </div>
+                              {product.originalPrice && (
+                                <div className="text-sm text-gray-400 line-through">
+                                  Rs {product.originalPrice}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Stock Info */}
+                            <div className="text-sm text-gray-600">
+                              {dir === 'ltr' ? 'Stock:' : 'اسٹاک:'} {product.stock} {product.unit}
+                            </div>
+                          </div>
+                          
+                          {/* WhatsApp & Call Buttons */}
+                          <div className="flex gap-2 mt-2">
+                            {/* WhatsApp Button */}
+                            <a
+                              href={`https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(
+                                dir === 'ltr'
+                                  ? `Hi, I want to order ${product.nameEn} (Rs ${product.price}/${product.unit}). Please confirm availability.`
+                                  : `السلام علیکم، میں ${product.nameUr} (${product.price} روپے/${product.unit}) آرڈر کرنا چاہتا ہوں۔ براہ کرم دستیابی کی تصدیق کریں۔`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <SiWhatsapp className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'WhatsApp' : 'واٹس ایپ'}</span>
+                            </a>
+                            
+                            {/* Call Button */}
+                            <a
+                              href={`tel:${phoneNumber}`}
+                              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <Phone className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'Call' : 'کال'}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {dir === 'ltr' ? 'No wheat products found' : 'کوئی گندم کی مصنوعات نہیں ملیں'}
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Flour Products Tab */}
             <TabsContent value="flour" className="mt-0">
-              <div className={viewMode === "grid" && !isMobile 
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
-                : "space-y-4 sm:space-y-6"
-              } dir={dir}>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, n) => (
+              {isLoading ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {Array.from({ length: 3 }).map((_, n) => (
                     <ProductSkeleton key={n} viewMode={viewMode} isMobile={isMobile} />
-                  ))
-                ) : filteredFlourProducts && filteredFlourProducts.length > 0 ? (
-                  filteredFlourProducts.map(product => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
-                      viewMode={viewMode}
-                    />
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-12">
-                    <p className="text-muted-foreground">
-                      {dir === 'ltr' ? 'No flour products found' : 'کوئی آٹے کی مصنوعات نہیں ملیں'}
-                    </p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : flourProducts.length > 0 ? (
+                <div className={viewMode === "grid" && !isMobile 
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" 
+                  : "space-y-4 sm:space-y-6"
+                } dir={dir}>
+                  {flourProducts.map(product => (
+                    <div key={product.id} className="h-full">
+                      {/* Custom Product Card WITH WhatsApp & Call */}
+                      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                        {/* Product Image */}
+                        <div className="relative h-56 sm:h-64 overflow-hidden bg-gray-100">
+                          <img 
+                            src={product.image || '/shop-images/atta.jpg'} 
+                            alt={dir === 'ltr' ? product.nameEn : product.nameUr}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* Badges */}
+                          <div className="absolute top-3 left-3 flex gap-2">
+                            {product.isBestSeller && (
+                              <div className="bg-primary text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'Best Seller' : 'بیسٹ سیلر'}
+                              </div>
+                            )}
+                            {product.isNew && (
+                              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                {dir === 'ltr' ? 'New' : 'نیا'}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Product Details */}
+                        <div className="p-5 sm:p-6 flex-1 flex flex-col">
+                          <h3 className={`text-xl font-bold text-gray-900 mb-2 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? product.nameEn : product.nameUr}
+                          </h3>
+                          
+                          <p className={`text-gray-600 text-sm mb-4 flex-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+                            {dir === 'ltr' ? (product.descriptionEn || '') : (product.descriptionUr || '')}
+                          </p>
+                          
+                          <div className="flex items-center justify-between mt-auto mb-3">
+                            <div>
+                              <div className="text-2xl font-bold text-primary">
+                                Rs {product.price}
+                                <span className="text-sm text-gray-500 font-normal">/{product.unit}</span>
+                              </div>
+                              {product.originalPrice && (
+                                <div className="text-sm text-gray-400 line-through">
+                                  Rs {product.originalPrice}
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Stock Info */}
+                            <div className="text-sm text-gray-600">
+                              {dir === 'ltr' ? 'Stock:' : 'اسٹاک:'} {product.stock} {product.unit}
+                            </div>
+                          </div>
+                          
+                          {/* WhatsApp & Call Buttons */}
+                          <div className="flex gap-2 mt-2">
+                            {/* WhatsApp Button */}
+                            <a
+                              href={`https://wa.me/${cleanWhatsappNumber}?text=${encodeURIComponent(
+                                dir === 'ltr'
+                                  ? `Hi, I want to order ${product.nameEn} (Rs ${product.price}/${product.unit}). Please confirm availability.`
+                                  : `السلام علیکم، میں ${product.nameUr} (${product.price} روپے/${product.unit}) آرڈر کرنا چاہتا ہوں۔ براہ کرم دستیابی کی تصدیق کریں۔`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <SiWhatsapp className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'WhatsApp' : 'واٹس ایپ'}</span>
+                            </a>
+                            
+                            {/* Call Button */}
+                            <a
+                              href={`tel:${phoneNumber}`}
+                              className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-lg font-medium transition-colors flex-1 text-sm"
+                            >
+                              <Phone className="h-4 w-4" />
+                              <span>{dir === 'ltr' ? 'Call' : 'کال'}</span>
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    {dir === 'ltr' ? 'No flour products found' : 'کوئی آٹے کی مصنوعات نہیں ملیں'}
+                  </p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
 
-          {/* Debug Info (Remove after testing) */}
-          {!isLoading && (
-            <div className="mt-8 p-4 bg-gray-100 rounded-lg text-xs">
-              <p className="font-bold">Image Debug:</p>
-              {allProducts.map(p => (
-                <div key={p.id} className="flex items-center gap-2">
-                  <span>{p.name}:</span>
-                  <span className="text-blue-600">{p.image}</span>
-                  <img 
-                    src={p.image} 
-                    alt="test" 
-                    className="w-8 h-8 object-cover rounded"
-                    onError={(e) => {
-                      console.error("Failed to load:", p.image);
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Back to Home Button */}
+          <div className="text-center mt-12">
+            <Link href="/">
+              <Button variant="outline" size="lg" className="gap-2">
+                {dir === 'ltr' ? '← Back to Home' : '← ہوم پیج پر واپس جائیں'}
+              </Button>
+            </Link>
+          </div>
         </div>
       </main>
 
