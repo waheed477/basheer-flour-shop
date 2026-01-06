@@ -155,13 +155,13 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               className="flex-1 space-y-4 sm:space-y-6 text-center lg:text-left"
             >
-              {/* Pathar Atta Chakkee Tagline */}
-              <div className={`inline-flex items-center gap-2 bg-amber-700/50 border border-amber-600/30 px-4 py-2 rounded-full ${dir === 'rtl' ? 'font-urdu' : ''}`}>
-                <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-amber-300 font-semibold text-sm tracking-wide">
-                  {dir === 'ltr' ? 'Pathar Atta Chakkee' : 'پتھر آٹا چکی'}
-                </span>
-              </div>
+            {/* Pathar Atta Chakkee Tagline - UPDATED WITH LARGER SIZE */}
+<div className={`inline-flex items-center gap-2 bg-amber-700/50 border border-amber-600/30 px-4 py-3 rounded-full mb-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+  <div className="w-2 h-1 rounded-full bg-amber-400 animate-pulse" />
+  <span className="text-amber-350 font-bold text-base sm:text-lg tracking-wide">
+    {dir === 'ltr' ? 'PATHAR ATTA CHAKKEE' : 'پتھر آٹا چکی'}
+  </span>
+</div>
               
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold leading-tight text-wheat-gradient">
                 {dir === 'ltr' ? (
