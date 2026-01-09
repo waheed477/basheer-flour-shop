@@ -45,54 +45,29 @@ export default function HomePage() {
       : "السلام علیکم، میں بشیر آٹے کی دکان کی مصنوعات میں دلچسپی رکھتا ہوں۔ براہ کرم اپنی مصنوعات کی تفصیلات شیئر کریں۔"
   );
 
-  // 🔧 ENHANCED: Load products from localStorage with backup
+  // Load products from localStorage
   useEffect(() => {
     const loadProducts = () => {
       setIsLoading(true);
       try {
-        let loadedProducts = defaultProducts.slice(0, 3);
-        let source = "default";
+        const savedProducts = localStorage.getItem("flour_shop_products");
         
-        // Try multiple storage sources
-        const storageSources = [
-          { name: "localStorage", getter: () => localStorage.getItem("flour_shop_products") },
-          { name: "sessionStorage", getter: () => sessionStorage.getItem("flour_shop_products_backup") }
-        ];
-        
-        for (const sourceInfo of storageSources) {
-          const savedData = sourceInfo.getter();
-          if (savedData) {
-            try {
-              const parsedProducts = JSON.parse(savedData);
-              if (Array.isArray(parsedProducts) && parsedProducts.length > 0) {
-                loadedProducts = parsedProducts.slice(0, 3);
-                source = sourceInfo.name;
-                break;
-              }
-            } catch (e) {
-              console.log(`Error parsing ${sourceInfo.name}:`, e);
-            }
-          }
+        if (savedProducts) {
+          const parsedProducts = JSON.parse(savedProducts);
+          setHomeProducts(parsedProducts.slice(0, 3));
+        } else {
+          setHomeProducts(defaultProducts.slice(0, 3));
+          localStorage.setItem("flour_shop_products", JSON.stringify(defaultProducts));
         }
-        
-        console.log(`🏠 Homepage products from ${source}:`, loadedProducts.length);
-        setHomeProducts(loadedProducts);
-        
       } catch (error) {
-        console.error("Error loading products for homepage:", error);
+        console.error("Error loading products:", error);
         setHomeProducts(defaultProducts.slice(0, 3));
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Load immediately
     loadProducts();
-    
-    // Also load every 3 seconds to catch any updates
-    const interval = setInterval(loadProducts, 3000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   // Shop images
@@ -128,25 +103,6 @@ export default function HomePage() {
       console.error = originalError;
       clearInterval(cleanup);
     };
-  }, []);
-
-  // Auto-refresh products every 10 seconds (optional)
-  useEffect(() => {
-    const autoRefresh = setInterval(() => {
-      const savedProducts = localStorage.getItem("flour_shop_products");
-      if (savedProducts) {
-        try {
-          const parsedProducts = JSON.parse(savedProducts);
-          if (Array.isArray(parsedProducts)) {
-            setHomeProducts(parsedProducts.slice(0, 3));
-          }
-        } catch (e) {
-          console.log('Auto-refresh error:', e);
-        }
-      }
-    }, 10000);
-    
-    return () => clearInterval(autoRefresh);
   }, []);
 
   return (
@@ -186,10 +142,6 @@ export default function HomePage() {
             alt="Wheat Field" 
             className="w-full h-full object-cover"
             loading="eager"
-            onError={(e) => {
-              e.currentTarget.src = '/shop-images/wheat.jpg';
-              e.currentTarget.style.opacity = '0.5';
-            }}
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-stone-900 to-transparent z-10" />
@@ -203,13 +155,13 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               className="flex-1 space-y-4 sm:space-y-6 text-center lg:text-left"
             >
-              {/* Pathar Atta Chakkee Tagline */}
-              <div className={`inline-flex items-center gap-2 bg-amber-700/50 border border-amber-600/30 px-4 py-3 rounded-full mb-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
-                <div className="w-2 h-1 rounded-full bg-amber-400 animate-pulse" />
-                <span className="text-amber-350 font-bold text-base sm:text-lg tracking-wide">
-                  {dir === 'ltr' ? 'PATHAR ATTA CHAKKEE' : 'پتھر آٹا چکی'}
-                </span>
-              </div>
+            {/* Pathar Atta Chakkee Tagline - UPDATED WITH LARGER SIZE */}
+<div className={`inline-flex items-center gap-2 bg-amber-700/50 border border-amber-600/30 px-4 py-3 rounded-full mb-1 ${dir === 'rtl' ? 'font-urdu' : ''}`}>
+  <div className="w-2 h-1 rounded-full bg-amber-400 animate-pulse" />
+  <span className="text-amber-350 font-bold text-base sm:text-lg tracking-wide">
+    {dir === 'ltr' ? 'PATHAR ATTA CHAKKEE' : 'پتھر آٹا چکی'}
+  </span>
+</div>
               
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold leading-tight text-wheat-gradient">
                 {dir === 'ltr' ? (

@@ -14,7 +14,7 @@ import { ArrowLeft, Save, Phone, Mail, MapPin, Clock, Globe, Settings as Setting
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useSettings, useUpdateSettings } from "@/hooks/use-settings";
+import { useSettings, useUpdateSettings } from "@/hooks/use-settings-final";
 import { settingsFormSchema, type SettingsFormValues } from "@/shared/schema";
 
 export default function WebsiteSettings() {

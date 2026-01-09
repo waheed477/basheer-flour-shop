@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Filter, Search, Grid, List, RefreshCw, Wheat, Phone } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import { useSettings } from "@/hooks/use-settings";
 import { Link } from "wouter";
 
 // Updated Product Interface to match data/products.ts
@@ -39,10 +38,10 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const { data: settings, isLoading: settingsLoading } = useSettings();
   
-  const whatsappNumber = settings?.whatsappNumber || "923008666593";
-  const phoneNumber = settings?.phoneNumber || "+923008666593";
+  // ✅ FIXED: Hardcoded values
+  const whatsappNumber = "923008666593";
+  const phoneNumber = "+923008666593";
   const cleanWhatsappNumber = whatsappNumber.replace(/[+\s]/g, '');
 
   // Fix image paths function
