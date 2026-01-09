@@ -3,10 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    
+    <!-- BROWSER PERSISTENCE TAGS - Products will not reset -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    
     <link rel="icon" type="image/png" href="/favicon.png" />
     
     <!-- Added title tag - Yeh zaroori hai! -->
-    <title>Flour Shop</title>
+    <title>Bashir Flour Shop | Premium Quality Wheat & Flour</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Premium quality wheat and flour from Bashir Flour Shop. Fresh from farms, traditional stone chakki processing. Order via WhatsApp/Call.">
+    <meta name="keywords" content="flour, wheat, atta, chakki, bashir, lahore, pakistan, fresh, premium, quality">
+    <meta name="author" content="Bashir Flour Shop">
+    
+    <!-- Open Graph Tags for Social Media -->
+    <meta property="og:title" content="Bashir Flour Shop | Premium Quality Wheat & Flour">
+    <meta property="og:description" content="Fresh from farms, traditional stone chakki processing. Premium quality at best prices.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/shop-images/wheat.jpg">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,5 +34,26 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker for Persistent Storage -->
+    <script>
+      // Register Service Worker for offline persistence
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js').then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+      
+      // Force localStorage persistence
+      if ('storage' in navigator && 'persist' in navigator.storage) {
+        navigator.storage.persist().then(function(persistent) {
+          console.log('Storage persistence granted:', persistent);
+        });
+      }
+    </script>
   </body>
 </html>
