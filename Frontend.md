@@ -82,7 +82,3 @@ Preferred communication style: Simple, everyday language.
 - **Vite**: Frontend dev server and bundler
 - **esbuild**: Server bundling for production
 - **tsx**: TypeScript execution for development
-
-### Replit-specific
-- **@replit/vite-plugin-runtime-error-modal**: Error overlay in development
-- **@replit/vite-plugin-cartographer**: Development tooling
