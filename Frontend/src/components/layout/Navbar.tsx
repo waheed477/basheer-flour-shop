@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Wheat, Menu, X, Globe, Phone, ShoppingBag, LogIn } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Settings } from "lucide-react"; // Add this import
+import { Settings } from "lucide-react";
+
 export function Navbar() {
   const { t, language, setLanguage, dir } = useLanguage();
   const [location] = useLocation();
@@ -24,9 +25,9 @@ export function Navbar() {
         {t("nav.contact")}
       </Link>
       <Link href="/settings" className={`text-base font-medium transition-colors hover:text-primary ${isActive("/settings") ? "text-primary font-bold" : "text-foreground/80"}`}>
-      <Settings className="h-4 w-4 inline mr-1" />
-      Settings
-    </Link>
+        <Settings className="h-4 w-4 inline mr-1" />
+        Admin
+      </Link>
     </>
   );
 
@@ -58,12 +59,6 @@ export function Navbar() {
               <Globe className="h-4 w-4" />
               {language === "en" ? "Urdu" : "English"}
             </Button>
-            <Link href="/admin/login">
-              <Button variant="outline" size="sm" className="gap-2 touch-target">
-                <LogIn className="h-4 w-4" />
-                {t("nav.admin")}
-              </Button>
-            </Link>
           </div>
 
           {/* Mobile Nav */}
@@ -134,23 +129,15 @@ export function Navbar() {
                     {/* Divider */}
                     <div className="h-px bg-border my-4" />
                     
-                    {/* Admin Login - Mobile */}
+                    {/* Admin Link - Mobile */}
                     <Link 
-                      href="/admin/login" 
-                      onClick={() => setIsMobileOpen(false)}
-                      className="flex items-center gap-2 text-lg font-medium py-3 px-4 rounded-lg hover:bg-secondary/50 transition-colors"
+                      href="/settings" 
+                      onClick={() => setIsMobileOpen(false)} 
+                      className={`text-lg font-medium py-3 px-4 rounded-lg transition-colors ${isActive("/settings") ? "bg-primary/10 text-primary" : "hover:bg-secondary/50"}`}
                     >
-                      <LogIn className="h-5 w-5" />
-                      {t("nav.admin")}
+                      <Settings className="h-5 w-5 inline mr-2" />
+                      Admin
                     </Link>
-                    <Link 
-  href="/settings" 
-  onClick={() => setIsMobileOpen(false)} 
-  className={`text-lg font-medium py-3 px-4 rounded-lg transition-colors ${isActive("/settings") ? "bg-primary/10 text-primary" : "hover:bg-secondary/50"}`}
->
-  <Settings className="h-5 w-5 inline mr-2" />
-  Settings
-</Link>
                   </div>
                   
                   {/* Language Switcher - Mobile Menu */}

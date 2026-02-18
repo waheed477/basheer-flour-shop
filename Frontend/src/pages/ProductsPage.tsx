@@ -14,7 +14,7 @@ import { Filter, Search, Grid, List, RefreshCw, Wheat, Phone } from "lucide-reac
 import { SiWhatsapp } from "react-icons/si";
 import { Link } from "wouter";
 
-// Updated Product Interface to match data/products.ts
+// Product Interface
 interface Product {
   id: number;
   nameEn: string;
@@ -39,7 +39,7 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   
-  // ✅ FIXED: Hardcoded values
+  // Contact numbers
   const whatsappNumber = "923008666593";
   const phoneNumber = "+923008666593";
   const cleanWhatsappNumber = whatsappNumber.replace(/[+\s]/g, '');
@@ -81,69 +81,32 @@ export default function ProductsPage() {
     });
   };
 
-  // 🔧 ENHANCED: Load products from multiple storage sources
+  // Load products
   useEffect(() => {
     const loadProducts = () => {
       setIsLoading(true);
       try {
         let loadedProducts = defaultProducts;
-        let source = "default";
         
-        // Try multiple storage sources
-        const storageSources = [
-          { name: "localStorage", getter: () => localStorage.getItem("flour_shop_products") },
-          { name: "sessionStorage", getter: () => sessionStorage.getItem("flour_shop_products_backup") },
-          { name: "cookies", getter: () => {
-            const cookies = document.cookie.split(';');
-            for (const cookie of cookies) {
-              const [name, value] = cookie.trim().split('=');
-              if (name === 'flour_shop_products' && value) {
-                try {
-                  return decodeURIComponent(value);
-                } catch (e) {
-                  console.log('Cookie decode error:', e);
-                }
-              }
+        // Try localStorage
+        const savedData = localStorage.getItem("flour_shop_products");
+        if (savedData) {
+          try {
+            const parsedProducts = JSON.parse(savedData);
+            if (Array.isArray(parsedProducts) && parsedProducts.length > 0) {
+              loadedProducts = parsedProducts;
             }
-            return null;
-          }}
-        ];
-        
-        for (const sourceInfo of storageSources) {
-          const savedData = sourceInfo.getter();
-          if (savedData) {
-            try {
-              const parsedProducts = JSON.parse(savedData);
-              if (Array.isArray(parsedProducts) && parsedProducts.length > 0) {
-                loadedProducts = parsedProducts;
-                source = sourceInfo.name;
-                break;
-              }
-            } catch (e) {
-              console.log(`Error parsing ${sourceInfo.name}:`, e);
-            }
+          } catch (e) {
+            console.log("Error parsing products");
           }
         }
         
-        console.log(`🛒 ProductsPage loaded from ${source}:`, loadedProducts.length);
-        
         // Fix image paths
         const fixedProducts = fixImagePaths(loadedProducts);
-        
-        // Save to localStorage if from backup source
-        if (source !== "localStorage") {
-          localStorage.setItem("flour_shop_products", JSON.stringify(fixedProducts));
-        }
-        
-        // Save fixed products back if different
-        if (JSON.stringify(loadedProducts) !== JSON.stringify(fixedProducts)) {
-          localStorage.setItem("flour_shop_products", JSON.stringify(fixedProducts));
-        }
-        
         setAllProducts(fixedProducts);
         
       } catch (error) {
-        console.error("Error loading products:", error);
+        console.error("Error loading products");
         const fixedDefaultProducts = fixImagePaths(defaultProducts);
         setAllProducts(fixedDefaultProducts);
       } finally {
@@ -151,52 +114,8 @@ export default function ProductsPage() {
       }
     };
 
-    // Load immediately
     loadProducts();
-    
-    // Also load every 3 seconds to catch any updates from settings page
-    const interval = setInterval(loadProducts, 3000);
-    
-    return () => clearInterval(interval);
   }, []);
-
-  const refreshProducts = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      // Enhanced refresh with multiple sources
-      try {
-        const savedProducts = localStorage.getItem("flour_shop_products");
-        if (savedProducts) {
-          const parsedProducts = JSON.parse(savedProducts);
-          const fixedProducts = fixImagePaths(parsedProducts);
-          setAllProducts(fixedProducts);
-        } else {
-          // Try sessionStorage backup
-          const backupProducts = sessionStorage.getItem("flour_shop_products_backup");
-          if (backupProducts) {
-            const parsedBackup = JSON.parse(backupProducts);
-            const fixedProducts = fixImagePaths(parsedBackup);
-            setAllProducts(fixedProducts);
-            localStorage.setItem("flour_shop_products", JSON.stringify(fixedProducts));
-          }
-        }
-      } catch (error) {
-        console.error("Refresh error:", error);
-      }
-      setIsLoading(false);
-    }, 500);
-  };
-
-  const resetToDefault = () => {
-    const fixedDefaultProducts = fixImagePaths(defaultProducts);
-    setAllProducts(fixedDefaultProducts);
-    
-    // Save to multiple locations
-    localStorage.setItem("flour_shop_products", JSON.stringify(fixedDefaultProducts));
-    sessionStorage.setItem("flour_shop_products_backup", JSON.stringify(fixedDefaultProducts));
-    
-    alert("✅ Products reset to default with correct images!");
-  };
 
   const wheatProducts = allProducts.filter(p => p.category === 'wheat');
   const flourProducts = allProducts.filter(p => p.category === 'flour');
@@ -225,30 +144,6 @@ export default function ProductsPage() {
 
   const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
 
-  // Auto-refresh products when localStorage changes (from settings page)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'flour_shop_products' && e.newValue) {
-        try {
-          const parsedProducts = JSON.parse(e.newValue);
-          if (Array.isArray(parsedProducts)) {
-            const fixedProducts = fixImagePaths(parsedProducts);
-            setAllProducts(fixedProducts);
-            console.log('🔄 Products updated from storage event');
-          }
-        } catch (error) {
-          console.error('Error handling storage change:', error);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
   return (
     <div className={`min-h-screen bg-background flex flex-col font-sans ${dir === 'rtl' ? 'font-urdu' : ''}`}>
       <Navbar />
@@ -273,40 +168,6 @@ export default function ProductsPage() {
                     : "اعلیٰ معیار کے اناج اور آٹے کے ہمارے انتخاب کو براؤز کریں"
                   }
                 </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <div className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded">
-                  Auto-sync: ON
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={refreshProducts}
-                  className="gap-2"
-                  disabled={isLoading}
-                >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={resetToDefault}
-                  className="gap-2 hidden sm:inline-flex"
-                >
-                  Reset Data
-                </Button>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3 justify-center text-sm">
-              <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full">
-                Total: {allProducts.length} products
-              </div>
-              <div className="bg-amber-50 text-amber-700 px-3 py-1 rounded-full">
-                Wheat: {wheatProducts.length}
-              </div>
-              <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                Flour: {flourProducts.length}
               </div>
             </div>
           </motion.div>
@@ -391,19 +252,19 @@ export default function ProductsPage() {
                   value="all" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {dir === 'ltr' ? 'All Products' : 'تمام مصنوعات'} ({allProducts.length})
+                  {dir === 'ltr' ? 'All Products' : 'تمام مصنوعات'}
                 </TabsTrigger>
                 <TabsTrigger 
                   value="wheat" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {dir === 'ltr' ? 'Wheat' : 'گندم'} ({wheatProducts.length})
+                  {dir === 'ltr' ? 'Wheat' : 'گندم'}
                 </TabsTrigger>
                 <TabsTrigger 
                   value="flour" 
                   className="rounded-full px-4 sm:px-6 py-1.5 sm:py-2 text-sm sm:text-base data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                 >
-                  {dir === 'ltr' ? 'Flour' : 'آٹا'} ({flourProducts.length})
+                  {dir === 'ltr' ? 'Flour' : 'آٹا'}
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -516,24 +377,6 @@ export default function ProductsPage() {
               )}
             </TabsContent>
           </Tabs>
-
-          {/* Storage Info Banner */}
-          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-2 rounded">
-                <RefreshCw className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-blue-800">🔄 Real-time Sync Active</h4>
-                <p className="text-sm text-blue-600">
-                  {dir === 'ltr' 
-                    ? "Products update automatically when changed in Settings"
-                    : "ترتیبات میں تبدیلی کرتے ہی مصنوعات خود بخود اپ ڈیٹ ہوجاتی ہیں"
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Back to Home Button */}
           <div className="text-center mt-12">

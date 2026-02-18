@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Save, Lock, LogOut, Plus, Trash2, RefreshCw, Database } from "lucide-react";
 
-// Updated Product Interface to match data/products.ts
+// Product Interface
 interface Product {
   id: number;
   nameEn: string;
@@ -23,7 +23,7 @@ interface Product {
   isNew?: boolean;
 }
 
-// Initial products data - Updated to match new structure
+// Initial products data
 const initialProducts: Product[] = [
   {
     id: 1,
@@ -72,7 +72,7 @@ const initialProducts: Product[] = [
 export default function SettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error' | 'info'} | null>(null);
   const [nextId, setNextId] = useState(4);
   const [isSaving, setIsSaving] = useState(false);
@@ -83,10 +83,10 @@ export default function SettingsPage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // 🔧 ENHANCED: Load products from MULTIPLE storage sources
+  // PERMANENT STORAGE - Load products from localStorage only
   const loadProductsFromStorage = () => {
     try {
-      // Try localStorage first
+      // Only load from localStorage - this is the single source of truth
       const savedProducts = localStorage.getItem("flour_shop_products");
       
       if (savedProducts) {
@@ -94,36 +94,19 @@ export default function SettingsPage() {
         setProducts(parsedProducts);
         
         // Find max ID for next product
-        const maxId = Math.max(...parsedProducts.map((p: Product) => p.id));
+        const maxId = Math.max(...parsedProducts.map((p: Product) => p.id), 0);
         setNextId(maxId + 1);
-        console.log('📦 Products loaded from localStorage:', parsedProducts.length);
+        console.log('📦 Products loaded from localStorage');
+        return true;
+      } else {
+        // If no saved products, use initial products and save them
+        setProducts(initialProducts);
+        localStorage.setItem("flour_shop_products", JSON.stringify(initialProducts));
+        console.log('📦 Using initial products');
         return true;
       }
-      
-      // If not in localStorage, try sessionStorage backup
-      const backupProducts = sessionStorage.getItem("flour_shop_products_backup");
-      if (backupProducts) {
-        const parsedBackup = JSON.parse(backupProducts);
-        setProducts(parsedBackup);
-        
-        const maxId = Math.max(...parsedBackup.map((p: Product) => p.id));
-        setNextId(maxId + 1);
-        console.log('📦 Products loaded from sessionStorage backup:', parsedBackup.length);
-        
-        // Restore to localStorage
-        localStorage.setItem("flour_shop_products", backupProducts);
-        return true;
-      }
-      
-      // If still not found, use initial products
-      setProducts(initialProducts);
-      localStorage.setItem("flour_shop_products", JSON.stringify(initialProducts));
-      console.log('📦 Using initial products');
-      return true;
-      
     } catch (error) {
       console.error('❌ Error loading products:', error);
-      // Use initial products as fallback
       setProducts(initialProducts);
       return false;
     }
@@ -140,18 +123,6 @@ export default function SettingsPage() {
     // Load products from storage
     loadProductsFromStorage();
   }, []);
-
-  // Check storage persistence on mount
-  useEffect(() => {
-    if (isAuthenticated && 'storage' in navigator && 'persist' in navigator.storage) {
-      navigator.storage.persist().then(persistent => {
-        console.log('🔒 Browser storage persistence:', persistent ? 'Granted' : 'Denied');
-        if (!persistent) {
-          showNotification("ℹ️ Enable 'Persistent Storage' in browser for better experience", "info");
-        }
-      });
-    }
-  }, [isAuthenticated]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,13 +142,13 @@ export default function SettingsPage() {
     showNotification("ℹ️ Logged out successfully.", "info");
   };
 
-  // FIXED: Update product with automatic unit setting
+  // Update product with automatic unit setting
   const updateProduct = (id: number, field: string, value: any) => {
     setProducts(prev => prev.map(product => {
       if (product.id === id) {
         const updatedProduct = { ...product, [field]: value };
         
-        // 🔧 AUTOMATIC UNIT FIX: If category changes, update unit automatically
+        // Auto-set unit based on category
         if (field === "category") {
           if (value === "wheat") {
             updatedProduct.unit = "maan";
@@ -203,7 +174,7 @@ export default function SettingsPage() {
       stock: 0,
       descriptionEn: "",
       descriptionUr: "",
-      unit: "kg", // Default for flour
+      unit: "kg",
       isBestSeller: false,
       isNew: true
     };
@@ -221,11 +192,11 @@ export default function SettingsPage() {
     
     if (window.confirm("Are you sure you want to delete this product?")) {
       setProducts(prev => prev.filter(product => product.id !== id));
-      showNotification("🗑️ Product deleted.", "success");
+      showNotification("🗑️ Product deleted. Don't forget to save!", "success");
     }
   };
 
-  // 🔧 ENHANCED PERMANENT SAVE FUNCTION
+  // PERMANENT SAVE - Only saves to localStorage
   const saveChanges = async () => {
     setIsSaving(true);
     
@@ -243,7 +214,7 @@ export default function SettingsPage() {
           }
         }
         
-        // 🔧 ENSURE CORRECT UNIT BASED ON CATEGORY
+        // Ensure correct unit based on category
         let correctUnit = product.unit;
         if (product.category === "wheat" && product.unit !== "maan") {
           correctUnit = "maan";
@@ -254,84 +225,21 @@ export default function SettingsPage() {
         return {
           ...product,
           image: imagePath,
-          unit: correctUnit // Always ensure correct unit
+          unit: correctUnit
         };
       });
       
-      // 🔧 MULTI-LAYERED SAVE SYSTEM
+      // PERMANENT SAVE - Only to localStorage
       const productData = JSON.stringify(fixedProducts);
-      
-      // 1. PRIMARY: Save to localStorage
       localStorage.setItem("flour_shop_products", productData);
       
-      // 2. BACKUP 1: Save to sessionStorage
-      sessionStorage.setItem("flour_shop_products_backup", productData);
-      
-      // 3. BACKUP 2: Save to IndexedDB (if available)
-      if ('indexedDB' in window) {
-        try {
-          const request = indexedDB.open('FlourShopDB', 1);
-          
-          request.onupgradeneeded = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            if (!db.objectStoreNames.contains('products')) {
-              db.createObjectStore('products', { keyPath: 'id' });
-            }
-          };
-          
-          request.onsuccess = (event) => {
-            const db = (event.target as IDBOpenDBRequest).result;
-            const transaction = db.transaction(['products'], 'readwrite');
-            const store = transaction.objectStore('products');
-            
-            // Clear existing and add all products
-            store.clear();
-            fixedProducts.forEach(product => {
-              store.add(product);
-            });
-            
-            transaction.oncomplete = () => {
-              console.log('💾 Products saved to IndexedDB');
-            };
-          };
-        } catch (dbError) {
-          console.log('⚠️ IndexedDB not available, skipping...');
-        }
-      }
-      
-      // 4. BACKUP 3: Save to cookies (limited size)
-      try {
-        // Split large data for cookies
-        const chunks = [];
-        for (let i = 0; i < productData.length; i += 4000) {
-          chunks.push(productData.slice(i, i + 4000));
-        }
-        
-        // Store chunk info
-        localStorage.setItem('product_chunks_count', chunks.length.toString());
-        
-        chunks.forEach((chunk, index) => {
-          document.cookie = `flour_shop_products_chunk_${index}=${encodeURIComponent(chunk)}; path=/; max-age=${60 * 60 * 24 * 365}`;
-        });
-      } catch (cookieError) {
-        console.log('⚠️ Cookie storage skipped (data too large)');
-      }
-      
-      // 5. UPDATE STATE
+      // Update state
       setProducts(fixedProducts);
       
-      // 6. FORCE PERSISTENCE REQUEST
-      if ('storage' in navigator && 'persist' in navigator.storage) {
-        await navigator.storage.persist();
-      }
-      
-      // 7. CONFIRMATION
-      console.log(`💾 Products saved PERMANENTLY (${fixedProducts.length} items)`);
-      console.log('Storage locations: localStorage, sessionStorage, IndexedDB');
-      
+      console.log(`💾 Products saved PERMANENTLY to localStorage`);
       showNotification(`✅ All changes saved PERMANENTLY! (${fixedProducts.length} products)`, "success");
       
-      // 8. Auto-reload after delay
+      // Auto-refresh after delay
       setTimeout(() => {
         setIsSaving(false);
         window.location.reload();
@@ -344,22 +252,12 @@ export default function SettingsPage() {
     }
   };
 
-  // 🔧 RESTORE FROM BACKUP
-  const restoreFromBackup = () => {
-    if (window.confirm("Restore products from latest backup? Current changes will be lost.")) {
-      if (loadProductsFromStorage()) {
-        showNotification("🔄 Products restored from backup!", "success");
-      } else {
-        showNotification("❌ No backup found!", "error");
-      }
-    }
-  };
-
-  // 🔧 RESET TO DEFAULT
+  // Reset to default
   const resetToDefault = () => {
     if (window.confirm("Reset all products to default? This cannot be undone.")) {
       setProducts(initialProducts);
       setNextId(4);
+      localStorage.setItem("flour_shop_products", JSON.stringify(initialProducts));
       showNotification("🔄 Reset to default products", "info");
     }
   };
@@ -433,28 +331,17 @@ export default function SettingsPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 p-6 bg-white rounded-xl shadow">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">⚙️ Product Settings</h1>
-            <p className="text-gray-600 mt-2">Manage your products (Admin Mode)</p>
+            <p className="text-gray-600 mt-2">Manage your products - Changes are permanent</p>
             <div className="flex flex-wrap gap-3 mt-2 text-sm">
               <div className="bg-green-50 text-green-700 px-3 py-1 rounded-full">
-                {products.filter(p => p.category === 'wheat').length} Wheat (Maan)
+                {products.filter(p => p.category === 'wheat').length} Wheat
               </div>
               <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
-                {products.filter(p => p.category === 'flour').length} Flour (Kg)
-              </div>
-              <div className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full">
-                Next ID: {nextId}
+                {products.filter(p => p.category === 'flour').length} Flour
               </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              onClick={restoreFromBackup}
-              variant="outline"
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Restore Backup
-            </Button>
             <Button 
               onClick={addNewProduct}
               variant="outline"
@@ -476,7 +363,7 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  Save All Changes
+                  Save Permanently
                 </>
               )}
             </Button>
@@ -540,7 +427,7 @@ export default function SettingsPage() {
                         Delete Product
                       </Button>
                       <div className="text-xs text-gray-500 text-center">
-                        Product ID: {product.id} | {product.category === 'wheat' ? 'Wheat (Maan)' : 'Flour (Kg)'}
+                        ID: {product.id} | {product.category === 'wheat' ? 'Wheat' : 'Flour'}
                       </div>
                     </div>
                   </div>
@@ -579,7 +466,6 @@ export default function SettingsPage() {
                           value={product.descriptionEn || ""}
                           onChange={(e) => updateProduct(product.id, "descriptionEn", e.target.value)}
                           className="min-h-[80px]"
-                          placeholder="English description"
                         />
                       </div>
                       
@@ -591,7 +477,6 @@ export default function SettingsPage() {
                           value={product.descriptionUr || ""}
                           onChange={(e) => updateProduct(product.id, "descriptionUr", e.target.value)}
                           className="min-h-[80px]"
-                          placeholder="اردو تفصیل"
                           dir="rtl"
                         />
                       </div>
@@ -599,7 +484,7 @@ export default function SettingsPage() {
                       {/* Price */}
                       <div className="space-y-2">
                         <Label htmlFor={`price-${product.id}`}>
-                          Price (Rs.) per <span className="font-bold">{product.category === 'wheat' ? 'Maan (40Kg)' : 'Kg'}</span>
+                          Price (Rs.) - {product.category === 'wheat' ? 'Per Maan (40Kg)' : 'Per Kg'}
                         </Label>
                         <Input
                           id={`price-${product.id}`}
@@ -613,7 +498,7 @@ export default function SettingsPage() {
                       {/* Original Price */}
                       <div className="space-y-2">
                         <Label htmlFor={`originalPrice-${product.id}`}>
-                          Original Price (Rs.) <span className="text-gray-500 text-sm">(for discount)</span>
+                          Original Price (for discount)
                         </Label>
                         <Input
                           id={`originalPrice-${product.id}`}
@@ -628,7 +513,7 @@ export default function SettingsPage() {
                       {/* Stock */}
                       <div className="space-y-2">
                         <Label htmlFor={`stock-${product.id}`}>
-                          Stock (<span className="font-bold">{product.unit === 'maan' ? 'Maan' : 'Kg'}</span>)
+                          Stock ({product.unit === 'maan' ? 'Maan' : 'Kg'})
                         </Label>
                         <Input
                           id={`stock-${product.id}`}
@@ -639,7 +524,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       
-                      {/* Category - FIXED: Shows correct unit info */}
+                      {/* Category */}
                       <div className="space-y-2">
                         <Label htmlFor={`category-${product.id}`}>Category</Label>
                         <select
@@ -651,105 +536,53 @@ export default function SettingsPage() {
                           <option value="wheat">Wheat (Unit: Maan - 40Kg)</option>
                           <option value="flour">Flour (Unit: Kg)</option>
                         </select>
-                        <p className="text-xs text-gray-500">
-                          {product.category === 'wheat' 
-                            ? 'Unit will be automatically set to "Maan" (40Kg)' 
-                            : 'Unit will be automatically set to "Kg"'}
-                        </p>
                       </div>
                       
-                      {/* Unit - READ ONLY (Automatically set based on category) */}
+                      {/* Unit - Read Only */}
                       <div className="space-y-2">
-                        <Label htmlFor={`unit-${product.id}`}>
-                          Unit <span className="text-gray-500 text-sm">(Auto-set based on category)</span>
-                        </Label>
+                        <Label>Unit (Auto-set)</Label>
                         <div className="w-full h-11 px-3 py-2 border rounded-md bg-gray-50 flex items-center">
                           <span className="font-bold">
                             {product.unit === 'maan' ? 'Maan (40Kg)' : 'Kilogram (Kg)'}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          {product.category === 'wheat' 
-                            ? 'Wheat products always use "Maan" unit' 
-                            : 'Flour products always use "Kg" unit'}
-                        </p>
                       </div>
                       
                       {/* Image URL */}
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor={`image-${product.id}`}>Image</Label>
                         <div className="flex flex-col gap-2">
-                          <div className="flex gap-2">
-                            <Input
-                              id={`image-${product.id}`}
-                              value={product.image}
-                              onChange={(e) => updateProduct(product.id, "image", e.target.value)}
-                              className="h-11 flex-1"
-                              placeholder="/shop-images/image.jpg"
-                            />
-                          </div>
+                          <Input
+                            id={`image-${product.id}`}
+                            value={product.image}
+                            onChange={(e) => updateProduct(product.id, "image", e.target.value)}
+                            className="h-11"
+                          />
                           <div className="flex gap-2 flex-wrap">
                             <Button
                               type="button"
                               size="sm"
-                              variant={product.image.includes("wheat.jpg") ? "default" : "outline"}
+                              variant="outline"
                               onClick={() => updateProduct(product.id, "image", "/shop-images/wheat.jpg")}
-                              className="gap-1"
                             >
                               🌾 Wheat
                             </Button>
                             <Button
                               type="button"
                               size="sm"
-                              variant={product.image.includes("wheat1.jpg") ? "default" : "outline"}
+                              variant="outline"
                               onClick={() => updateProduct(product.id, "image", "/shop-images/wheat1.jpg")}
-                              className="gap-1"
                             >
                               🌾 Wheat1
                             </Button>
                             <Button
                               type="button"
                               size="sm"
-                              variant={product.image.includes("atta.jpg") ? "default" : "outline"}
+                              variant="outline"
                               onClick={() => updateProduct(product.id, "image", "/shop-images/atta.jpg")}
-                              className="gap-1"
                             >
                               🫓 Atta
                             </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Live Preview */}
-                    <div className="pt-4 border-t">
-                      <Label>Live Preview:</Label>
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className="w-16 h-16 bg-gray-200 rounded overflow-hidden">
-                            <img 
-                              src={product.image} 
-                              alt="Preview" 
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div>
-                            <p className="font-bold">{product.nameEn}</p>
-                            <p className="text-sm text-gray-600">
-                              Rs {product.price} / {product.unit === "maan" ? "Maan" : "Kg"} | 
-                              Stock: {product.stock} {product.unit}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Category: {product.category === 'wheat' ? 'Wheat' : 'Flour'}
-                            </p>
-                            <div className="flex gap-2 mt-1">
-                              {product.isBestSeller && (
-                                <span className="bg-primary text-white px-2 py-0.5 rounded text-xs">Best Seller</span>
-                              )}
-                              {product.isNew && (
-                                <span className="bg-green-500 text-white px-2 py-0.5 rounded text-xs">New</span>
-                              )}
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -761,62 +594,26 @@ export default function SettingsPage() {
           ))}
         </div>
 
-        {/* Instructions - UPDATED */}
+        {/* Instructions */}
         <Card className="mt-8 bg-blue-50 border-blue-200">
           <CardContent className="p-6">
-            <h3 className="font-bold text-lg text-blue-800 mb-2">ℹ️ How to Use (Fixed Unit System)</h3>
+            <h3 className="font-bold text-lg text-blue-800 mb-2">ℹ️ How to Use (Permanent Storage)</h3>
             <ul className="space-y-1 text-blue-700 text-sm">
-              <li>• <strong>Wheat Products:</strong> Category = "Wheat" → Unit = <strong>"Maan" (40Kg)</strong> (Auto-set)</li>
-              <li>• <strong>Flour Products:</strong> Category = "Flour" → Unit = <strong>"Kg"</strong> (Auto-set)</li>
-              <li>• <strong>Unit is Automatic:</strong> When you change category, unit automatically updates</li>
-              <li>• <strong>Price per:</strong> Wheat = per Maan (40Kg), Flour = per Kg</li>
-              <li>• <strong>Stock:</strong> Enter quantity in Maan (for wheat) or Kg (for flour)</li>
-              <li>• <strong>Best Seller/New:</strong> Click buttons to toggle badges</li>
-              <li>• <strong>Original Price:</strong> Set for showing discounted price</li>
-              <li>• Edit any field and click "Save All Changes"</li>
-              <li>• Use image buttons to quickly assign images</li>
-              <li>• <strong>Multiple Save Locations:</strong> localStorage, sessionStorage, IndexedDB</li>
-              <li>• <strong>Restore Backup:</strong> Click "Restore Backup" if data gets lost</li>
-              <li>• Password: <code>basheer123</code></li>
+              <li>• <strong>Changes are PERMANENT:</strong> Once saved, changes stay until admin changes them</li>
+              <li>• <strong>Wheat:</strong> Category = Wheat → Unit = Maan (40Kg) - Auto-set</li>
+              <li>• <strong>Flour:</strong> Category = Flour → Unit = Kg - Auto-set</li>
+              <li>• <strong>Save Permanently:</strong> Click button to save all changes to localStorage</li>
+              <li>• <strong>No auto-revert:</strong> Changes won't reset on page refresh</li>
+              <li>• <strong>Password:</strong> basheer123</li>
             </ul>
             
             <div className="mt-4 pt-4 border-t border-blue-300">
-              <div className="flex flex-wrap gap-4">
-                <Button onClick={resetToDefault} variant="outline" size="sm">
-                  Reset to Default Products
-                </Button>
-                <Button onClick={() => console.log('Products data:', products)} variant="outline" size="sm">
-                  Debug Products Data
-                </Button>
-                <Button onClick={() => navigator.storage && navigator.storage.persist && navigator.storage.persist()} variant="outline" size="sm">
-                  Request Persistent Storage
-                </Button>
-              </div>
+              <Button onClick={resetToDefault} variant="outline" size="sm">
+                Reset to Default Products
+              </Button>
             </div>
           </CardContent>
         </Card>
-        
-        {/* Storage Status */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg text-sm">
-          <h4 className="font-bold mb-2">💾 Storage Status:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="bg-white p-3 rounded">
-              <div className="font-medium">localStorage</div>
-              <div className="text-green-600">✅ Primary storage</div>
-            </div>
-            <div className="bg-white p-3 rounded">
-              <div className="font-medium">sessionStorage</div>
-              <div className="text-blue-600">✅ Backup storage</div>
-            </div>
-            <div className="bg-white p-3 rounded">
-              <div className="font-medium">IndexedDB</div>
-              <div className="text-purple-600">✅ Fallback storage</div>
-            </div>
-          </div>
-          <p className="mt-3 text-gray-600 text-xs">
-            Data is saved to multiple locations to prevent loss. Total products: {products.length}
-          </p>
-        </div>
       </div>
     </div>
   );
