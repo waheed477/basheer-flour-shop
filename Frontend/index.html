@@ -13,15 +13,51 @@
     
     <link rel="icon" type="image/png" href="/favicon.png" />
     
-    <!-- Added title tag - Yeh zaroori hai! -->
+    <!-- Title tag -->
     <title>Bashir Flour Shop | Premium Quality Wheat & Flour</title>
+    
+    <!-- Version Control - Force update on deploy -->
+    <script>
+      const SITE_VERSION = '2.0.0'; // Update this with every deploy
+      const STORAGE_KEY = 'basheer_flour_version';
+      
+      // Check if version changed
+      if (localStorage.getItem(STORAGE_KEY) !== SITE_VERSION) {
+        console.log('🔄 New version detected, clearing cache...');
+        
+        // Clear all caches
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => {
+              caches.delete(name);
+            });
+          });
+        }
+        
+        // Clear localStorage (except version)
+        const savedProducts = localStorage.getItem('flour_shop_products');
+        localStorage.clear();
+        if (savedProducts) {
+          localStorage.setItem('flour_shop_products', savedProducts);
+        }
+        
+        // Set new version
+        localStorage.setItem(STORAGE_KEY, SITE_VERSION);
+        
+        // Reload page once
+        if (!sessionStorage.getItem('reloaded')) {
+          sessionStorage.setItem('reloaded', 'true');
+          window.location.reload(true);
+        }
+      }
+    </script>
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="Premium quality wheat and flour from Bashir Flour Shop. Fresh from farms, traditional stone chakki processing. Order via WhatsApp/Call.">
     <meta name="keywords" content="flour, wheat, atta, chakki, bashir, lahore, pakistan, fresh, premium, quality">
     <meta name="author" content="Bashir Flour Shop">
     
-    <!-- Open Graph Tags for Social Media -->
+    <!-- Open Graph Tags -->
     <meta property="og:title" content="Bashir Flour Shop | Premium Quality Wheat & Flour">
     <meta property="og:description" content="Fresh from farms, traditional stone chakki processing. Premium quality at best prices.">
     <meta property="og:type" content="website">
@@ -39,11 +75,17 @@
     <script>
       // Register Service Worker for offline persistence
       if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
+        });
+        
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('/sw.js').then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            console.log('ServiceWorker registration successful');
           }, function(err) {
-            console.log('ServiceWorker registration failed: ', err);
+            console.log('ServiceWorker registration failed');
           });
         });
       }
